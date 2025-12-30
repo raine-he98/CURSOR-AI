@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON格式化工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px 32px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            min-width: 200px;
+            max-width: calc(100% - 200px);
+        }
+
+        .resizer {
+            width: 4px;
+            background: #e5e7eb;
+            cursor: col-resize;
+            position: relative;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .resizer:hover {
+            background: #667eea;
+        }
+
+        .resizer::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #667eea;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .resizer:hover::before {
+            opacity: 1;
+        }
+
+        .resizer.dragging {
+            background: #667eea;
+        }
+
+        .resizer.dragging::before {
+            opacity: 1;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .input-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        textarea {
+            flex: 1;
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            border-color: #667eea;
+        }
+
+        .output-area {
+            flex: 1;
+            overflow: auto;
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 0;
+        }
+
+        .json-viewer {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .json-item {
+            margin-left: 0;
+        }
+
+        .json-key {
+            color: #0ea5e9;
+            font-weight: 500;
+        }
+
+        .json-key::after {
+            content: ':';
+            color: #6b7280;
+            margin-right: 8px;
+        }
+
+        .json-value {
+            color: #059669;
+        }
+
+        .json-value-string {
+            color: #dc2626;
+        }
+
+        .json-value-number {
+            color: #7c3aed;
+        }
+
+        .json-value-boolean {
+            color: #ea580c;
+        }
+
+        .json-value-null {
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .json-bracket {
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .json-toggle {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            line-height: 14px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            margin-right: 4px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            color: #374151;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .json-toggle:hover {
+            background: #d1d5db;
+        }
+
+        .json-toggle.expanded::before {
+            content: '−';
+        }
+
+        .json-toggle.collapsed::before {
+            content: '+';
+        }
+
+        .json-children {
+            margin-left: 20px;
+            border-left: 1px dashed #d1d5db;
+            padding-left: 12px;
+        }
+
+        .json-children.collapsed {
+            display: none;
+        }
+
+        .error-message {
+            color: #dc2626;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #9ca3af;
+            padding: 40px;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>JSON格式化工具</h1>
+            <p>输入JSON文本，自动格式化并支持展开/收起查看</p>
+        </div>
+        <div class="content">
+            <div class="panel" id="leftPanel">
+                <div class="panel-header">
+                    <div class="panel-title">输入区域</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-primary" onclick="formatJSON()">格式化</button>
+                        <button class="btn btn-primary" onclick="formatToTuple()">转元组</button>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <textarea id="inputText" placeholder="在此输入JSON文本或需要转换的文本...&#10;&#10;JSON示例：&#10;{&#10;  &quot;name&quot;: &quot;John&quot;,&#10;  &quot;age&quot;: 30,&#10;  &quot;city&quot;: &quot;New York&quot;&#10;}&#10;&#10;元组转换示例：&#10;A111&#10;B777&#10;（点击&quot;转元组&quot;按钮生成 ('A111','B777')）"></textarea>
+                    <div class="stats" id="inputStats">
+                        <div class="stat-item">
+                            <span>字符数: <strong id="charCount">0</strong></span>
+                        </div>
+                        <div class="stat-item">
+                            <span>行数: <strong id="lineCount">0</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="resizer" id="resizer"></div>
+            <div class="panel" id="rightPanel">
+                <div class="panel-header">
+                    <div class="panel-title">格式化结果</div>
+                    <button class="btn btn-secondary" onclick="expandAll()">全部展开</button>
+                    <button class="btn btn-secondary" onclick="collapseAll()" style="margin-left: 8px;">全部收起</button>
+                    <button class="btn btn-secondary" onclick="copyJSON(event)" style="margin-left: 8px;">复制</button>
+                </div>
+                <div class="output-area" id="outputArea">
+                    <div class="empty-state">格式化后的JSON将显示在这里</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let jsonData = null;
+        let jsonViewerElement = null;
+
+        // 监听输入框变化
+        document.getElementById('inputText').addEventListener('input', function() {
+            updateStats();
+        });
+
+        function updateStats() {
+            const text = document.getElementById('inputText').value;
+            document.getElementById('charCount').textContent = text.length;
+            document.getElementById('lineCount').textContent = text.split('\n').length;
+        }
+
+        function formatJSON() {
+            const inputText = document.getElementById('inputText').value.trim();
+            const outputArea = document.getElementById('outputArea');
+
+            if (!inputText) {
+                outputArea.innerHTML = '<div class="empty-state">请输入JSON文本</div>';
+                return;
+            }
+
+            try {
+                jsonData = JSON.parse(inputText);
+                renderJSON(jsonData, outputArea);
+            } catch (error) {
+                outputArea.innerHTML = `<div class="error-message">
+                    <strong>JSON解析错误：</strong><br>
+                    ${error.message}
+                </div>`;
+                jsonData = null;
+            }
+        }
+
+        function renderJSON(data, container, path = '') {
+            container.innerHTML = '';
+            jsonViewerElement = document.createElement('div');
+            jsonViewerElement.className = 'json-viewer';
+            buildJSONTree(data, jsonViewerElement, path);
+            container.appendChild(jsonViewerElement);
+        }
+
+        function buildJSONTree(data, parent, path = '', level = 0) {
+            const item = document.createElement('div');
+            item.className = 'json-item';
+
+            if (Array.isArray(data)) {
+                const toggle = document.createElement('span');
+                toggle.className = 'json-toggle expanded';
+                toggle.onclick = function() {
+                    toggleChildren(this, children);
+                };
+
+                const bracket = document.createElement('span');
+                bracket.className = 'json-bracket';
+                bracket.textContent = '[';
+
+                item.appendChild(toggle);
+                item.appendChild(bracket);
+
+                const children = document.createElement('div');
+                children.className = 'json-children';
+
+                if (data.length === 0) {
+                    bracket.textContent = '[]';
+                    toggle.style.display = 'none';
+                } else {
+                    data.forEach((value, index) => {
+                        const childItem = document.createElement('div');
+                        childItem.className = 'json-item';
+                        
+                        if (typeof value === 'object' && value !== null) {
+                            const childToggle = document.createElement('span');
+                            childToggle.className = 'json-toggle expanded';
+                            childToggle.onclick = function() {
+                                toggleChildren(this, childChildren);
+                            };
+
+                            const childBracket = document.createElement('span');
+                            childBracket.className = 'json-bracket';
+                            childBracket.textContent = Array.isArray(value) ? '[' : '{';
+
+                            childItem.appendChild(childToggle);
+                            childItem.appendChild(childBracket);
+
+                            const childChildren = document.createElement('div');
+                            childChildren.className = 'json-children';
+                            buildJSONTree(value, childChildren, `${path}[${index}]`, level + 1);
+                            childItem.appendChild(childChildren);
+
+                            const closingBracket = document.createElement('span');
+                            closingBracket.className = 'json-bracket';
+                            closingBracket.textContent = Array.isArray(value) ? ']' : '}';
+                            childItem.appendChild(closingBracket);
+
+                            if (index < data.length - 1) {
+                                const comma = document.createElement('span');
+                                comma.textContent = ',';
+                                comma.className = 'json-bracket';
+                                childItem.appendChild(comma);
+                            }
+                        } else {
+                            const valueSpan = createValueSpan(value);
+                            childItem.appendChild(valueSpan);
+                            if (index < data.length - 1) {
+                                const comma = document.createElement('span');
+                                comma.textContent = ',';
+                                comma.className = 'json-bracket';
+                                childItem.appendChild(comma);
+                            }
+                        }
+
+                        children.appendChild(childItem);
+                    });
+
+                    const closingBracket = document.createElement('span');
+                    closingBracket.className = 'json-bracket';
+                    closingBracket.textContent = ']';
+                    item.appendChild(children);
+                    item.appendChild(closingBracket);
+                }
+
+                parent.appendChild(item);
+            } else if (typeof data === 'object' && data !== null) {
+                const toggle = document.createElement('span');
+                toggle.className = 'json-toggle expanded';
+                
+                const bracket = document.createElement('span');
+                bracket.className = 'json-bracket';
+                bracket.textContent = '{';
+
+                item.appendChild(toggle);
+                item.appendChild(bracket);
+
+                const children = document.createElement('div');
+                children.className = 'json-children';
+
+                const keys = Object.keys(data);
+                if (keys.length === 0) {
+                    bracket.textContent = '{}';
+                    toggle.style.display = 'none';
+                } else {
+                    toggle.onclick = function() {
+                        toggleChildren(this, children);
+                    };
+
+                    keys.forEach((key, index) => {
+                        const childItem = document.createElement('div');
+                        childItem.className = 'json-item';
+
+                        const keySpan = document.createElement('span');
+                        keySpan.className = 'json-key';
+                        keySpan.textContent = `"${key}"`;
+
+                        childItem.appendChild(keySpan);
+
+                        const value = data[key];
+                        if (typeof value === 'object' && value !== null) {
+                            const childToggle = document.createElement('span');
+                            childToggle.className = 'json-toggle expanded';
+                            childToggle.onclick = function() {
+                                toggleChildren(this, childChildren);
+                            };
+
+                            const childBracket = document.createElement('span');
+                            childBracket.className = 'json-bracket';
+                            childBracket.textContent = Array.isArray(value) ? '[' : '{';
+
+                            childItem.appendChild(childToggle);
+                            childItem.appendChild(childBracket);
+
+                            const childChildren = document.createElement('div');
+                            childChildren.className = 'json-children';
+                            buildJSONTree(value, childChildren, path ? `${path}.${key}` : key, level + 1);
+                            childItem.appendChild(childChildren);
+
+                            const closingBracket = document.createElement('span');
+                            closingBracket.className = 'json-bracket';
+                            closingBracket.textContent = Array.isArray(value) ? ']' : '}';
+                            childItem.appendChild(closingBracket);
+                        } else {
+                            const valueSpan = createValueSpan(value);
+                            childItem.appendChild(valueSpan);
+                        }
+
+                        if (index < keys.length - 1) {
+                            const comma = document.createElement('span');
+                            comma.textContent = ',';
+                            comma.className = 'json-bracket';
+                            childItem.appendChild(comma);
+                        }
+
+                        children.appendChild(childItem);
+                    });
+
+                    const closingBracket = document.createElement('span');
+                    closingBracket.className = 'json-bracket';
+                    closingBracket.textContent = '}';
+                    item.appendChild(children);
+                    item.appendChild(closingBracket);
+                }
+
+                parent.appendChild(item);
+            } else {
+                const valueSpan = createValueSpan(data);
+                item.appendChild(valueSpan);
+                parent.appendChild(item);
+            }
+        }
+
+        function createValueSpan(value) {
+            const span = document.createElement('span');
+            if (value === null) {
+                span.className = 'json-value json-value-null';
+                span.textContent = 'null';
+            } else if (typeof value === 'string') {
+                span.className = 'json-value json-value-string';
+                span.textContent = `"${value}"`;
+            } else if (typeof value === 'number') {
+                span.className = 'json-value json-value-number';
+                span.textContent = value;
+            } else if (typeof value === 'boolean') {
+                span.className = 'json-value json-value-boolean';
+                span.textContent = value;
+            } else {
+                span.className = 'json-value';
+                span.textContent = value;
+            }
+            return span;
+        }
+
+        function toggleChildren(toggle, children) {
+            if (children.classList.contains('collapsed')) {
+                children.classList.remove('collapsed');
+                toggle.classList.remove('collapsed');
+                toggle.classList.add('expanded');
+            } else {
+                children.classList.add('collapsed');
+                toggle.classList.remove('expanded');
+                toggle.classList.add('collapsed');
+            }
+        }
+
+        function expandAll() {
+            if (!jsonViewerElement) return;
+            const toggles = jsonViewerElement.querySelectorAll('.json-toggle');
+            const children = jsonViewerElement.querySelectorAll('.json-children');
+            
+            toggles.forEach(toggle => {
+                toggle.classList.remove('collapsed');
+                toggle.classList.add('expanded');
+            });
+            
+            children.forEach(child => {
+                child.classList.remove('collapsed');
+            });
+        }
+
+        function collapseAll() {
+            if (!jsonViewerElement) return;
+            const toggles = jsonViewerElement.querySelectorAll('.json-toggle');
+            const children = jsonViewerElement.querySelectorAll('.json-children');
+            
+            toggles.forEach(toggle => {
+                toggle.classList.remove('expanded');
+                toggle.classList.add('collapsed');
+            });
+            
+            children.forEach(child => {
+                child.classList.add('collapsed');
+            });
+        }
+
+        function formatToTuple() {
+            const inputText = document.getElementById('inputText').value.trim();
+            const outputArea = document.getElementById('outputArea');
+
+            if (!inputText) {
+                outputArea.innerHTML = '<div class="empty-state">请输入文本</div>';
+                return;
+            }
+
+            // 按换行分隔，过滤空行
+            const lines = inputText.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
+            if (lines.length === 0) {
+                outputArea.innerHTML = '<div class="empty-state">请输入至少一行文本</div>';
+                return;
+            }
+
+            // 格式化为 ('','') 格式
+            const formatted = `('${lines.join("','")}')`;
+            
+            // 显示结果
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'json-viewer';
+            resultDiv.style.fontFamily = "'Monaco', 'Menlo', 'Ubuntu Mono', monospace";
+            resultDiv.style.fontSize = '14px';
+            resultDiv.style.lineHeight = '1.8';
+            resultDiv.style.color = '#1f2937';
+            resultDiv.textContent = formatted;
+            
+            outputArea.innerHTML = '';
+            outputArea.appendChild(resultDiv);
+            
+            // 保存结果用于复制
+            jsonData = formatted;
+        }
+
+        function copyJSON(event) {
+            let textToCopy = '';
+            
+            // 优先从输出区域获取文本内容
+            const outputArea = document.getElementById('outputArea');
+            const outputText = outputArea.textContent || outputArea.innerText;
+            
+            if (outputText && outputText.trim() && !outputText.includes('格式化后的JSON将显示在这里') && !outputText.includes('请输入')) {
+                // 如果输出区域有内容，直接使用
+                textToCopy = outputText.trim();
+            } else if (typeof jsonData === 'string' && jsonData.startsWith('(')) {
+                // 如果是元组格式，直接复制
+                textToCopy = jsonData;
+            } else if (jsonData) {
+                // 如果是JSON数据，格式化为JSON字符串
+                textToCopy = JSON.stringify(jsonData, null, 2);
+            } else {
+                alert('没有可复制的数据');
+                return;
+            }
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const btn = event ? event.target : document.querySelector('button[onclick="copyJSON()"]');
+                if (btn) {
+                    const originalText = btn.textContent;
+                    btn.textContent = '已复制!';
+                    btn.style.background = '#10b981';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                    }, 2000);
+                } else {
+                    alert('复制成功！');
+                }
+            }).catch(err => {
+                alert('复制失败: ' + err.message);
+            });
+        }
+
+        // 拖拽调整面板宽度
+        let isResizing = false;
+        const resizer = document.getElementById('resizer');
+        const leftPanel = document.getElementById('leftPanel');
+        const rightPanel = document.getElementById('rightPanel');
+        const content = document.querySelector('.content');
+
+        resizer.addEventListener('mousedown', function(e) {
+            isResizing = true;
+            resizer.classList.add('dragging');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isResizing) return;
+
+            const contentRect = content.getBoundingClientRect();
+            const mouseX = e.clientX - contentRect.left;
+            const contentWidth = contentRect.width;
+            
+            // 计算左右面板的宽度百分比
+            const leftWidth = (mouseX / contentWidth) * 100;
+            const rightWidth = 100 - leftWidth - (resizer.offsetWidth / contentWidth) * 100;
+
+            // 限制最小宽度（20%）
+            if (leftWidth >= 20 && leftWidth <= 80) {
+                leftPanel.style.width = leftWidth + '%';
+                rightPanel.style.width = rightWidth + '%';
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+
+        // 页面加载时更新统计
+        updateStats();
+    </script>
+</body>
+</html>
