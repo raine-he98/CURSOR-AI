@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Facebook自动搭建规则</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <style>
+    :root { color-scheme: light; }
+    body { background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+    .page-wrap { max-width: 860px; margin: 40px auto; padding: 0 24px; }
+    .section-box { border: 0; border-radius: 12px; padding: 0; background: transparent; margin-bottom: 0; }
+
+    /* 表单行布局（参考截图：左标签右控件） */
+    .form-grid { background: #fff; }
+    .form-row { display: flex; align-items: center; gap: 22px; padding: 10px 0; }
+    .label-col { width: 110px; flex: 0 0 110px; color: #606266; font-size: 14px; text-align: left; }
+    .ctrl-col { flex: 1; min-width: 0; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .ctrl-col.stack { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+    /* 输入/下拉 */
+    .form-control, .form-select {
+      height: 36px;
+      border-radius: 6px;
+      border-color: #dcdfe6;
+      font-size: 14px;
+      color: #303133;
+      box-shadow: none !important;
+    }
+    .form-control::placeholder { color: #c0c4cc; }
+    .form-select { padding-right: 34px; }
+    .form-control:focus, .form-select:focus { border-color: #1677ff; box-shadow: 0 0 0 .15rem rgba(22, 119, 255, 0.12) !important; }
+    /* 单选（蓝色选中） */
+    .form-check { margin-bottom: 0; }
+    .form-check-input { width: 14px; height: 14px; margin-top: 0; accent-color: #1677ff; }
+    .form-check-label { color: #606266; font-size: 14px; }
+    .form-check-input:checked + .form-check-label { color: #1677ff; font-weight: 600; }
+
+    /* 错误提示与必填星号 */
+    .form-label.required::before { content: '*'; color: #dc3545; margin-right: 4px; }
+    .invalid-feedback { display: none; }
+    .was-validated .form-control:invalid ~ .invalid-feedback,
+    .was-validated .form-select:invalid ~ .invalid-feedback { display: block; }
+
+    /* 控件宽度（贴近截图） */
+    .w-260 { width: 260px; max-width: 100%; }
+    .w-280 { width: 280px; max-width: 100%; }
+    .w-360 { width: 360px; max-width: 100%; }
+    .inline-note { color: #909399; font-size: 12px; }
+
+    /* Demo 聚焦高亮：应用账户及其联动区域 */
+    .focus-block {
+      background: #f5f9ff;
+      border: 1px solid #cfe1ff;
+      border-radius: 10px;
+      padding: 12px 12px;
+      margin: 6px 0 6px;
+    }
+    .focus-block .form-row { padding: 8px 0; }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="section-box">
+    <h1 class="h4 fw-semibold mb-4">Facebook自动搭建规则</h1>
+
+    <form id="ruleForm" class="needs-validation form-grid" novalidate>
+      <!-- 1. 规则名称 -->
+      <div class="form-row">
+        <div class="label-col form-label required">规则名称</div>
+        <div class="ctrl-col">
+          <input id="ruleName" name="ruleName" type="text" class="form-control w-360" placeholder="请输入规则名称，最多100字符" maxlength="100" required />
+          <div class="invalid-feedback">请填写规则名称</div>
+        </div>
+      </div>
+
+      <!-- 2. 投放阶段 -->
+      <div class="form-row">
+        <div class="label-col form-label required">投放阶段</div>
+        <div class="ctrl-col">
+          <select id="deliveryStage" name="deliveryStage" class="form-select w-280" required>
+            <option value="" selected disabled>请选择投放阶段</option>
+            <option value="阶段A">阶段A</option>
+            <option value="阶段B">阶段B</option>
+            <option value="阶段C">阶段C</option>
+          </select>
+          <div class="invalid-feedback">请选择投放阶段</div>
+        </div>
+      </div>
+
+      <!-- 3. 应用APP -->
+      <div class="form-row">
+        <div class="label-col form-label required">应用APP</div>
+        <div class="ctrl-col">
+          <select id="app" name="app" class="form-select w-280" required>
+            <option value="" selected disabled>请选择应用APP</option>
+            <option value="APP-1">APP-1</option>
+            <option value="APP-2">APP-2</option>
+            <option value="APP-3">APP-3</option>
+          </select>
+          <div class="invalid-feedback">请选择应用APP</div>
+        </div>
+      </div>
+
+      <!-- Demo 聚焦区域：应用账户及其联动组件 -->
+      <div class="focus-block" aria-label="应用账户联动区域">
+        <!-- 4. 应用账户（范围选择） -->
+        <div class="form-row">
+          <div class="label-col form-label required">应用账户</div>
+          <div class="ctrl-col">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="accountScope" id="scopeSpecific" value="指定账户" checked required>
+              <label class="form-check-label" for="scopeSpecific">指定账户</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="accountScope" id="scopeUnspecified" value="不指定账户">
+              <label class="form-check-label" for="scopeUnspecified">不指定账户</label>
+            </div>
+            <div class="inline-note w-100 d-none" id="unspecifiedHint">在海外成片管理-手动搭建中可选择一个或多个账户进行搭建</div>
+          </div>
+        </div>
+
+        <!-- 指定账户：账户选择器 + business_id（同行） -->
+        <div class="form-row" id="specificAccountBlock">
+          <div class="label-col"></div>
+          <div class="ctrl-col">
+            <select id="accountId" name="accountId" class="form-select w-280" required>
+              <option value="" selected disabled>请选择应用账户</option>
+              <option value="act_10001">act_10001</option>
+              <option value="act_10002">act_10002</option>
+              <option value="act_10003">act_10003</option>
+            </select>
+            <div class="invalid-feedback">请选择应用账户</div>
+
+            <div class="label-col" style="width:auto; flex:0 0 auto; color:#606266;">business_id</div>
+            <input id="businessId" name="businessId" type="text" class="form-control w-260" placeholder="请输入business_id" required />
+            <div class="invalid-feedback">请填写business_id</div>
+          </div>
+        </div>
+
+        <!-- 规则类型（不指定账户时固定新建广告不可变更） -->
+        <div class="form-row">
+          <div class="label-col form-label required">规则类型</div>
+          <div class="ctrl-col" id="ruleTypeGroup">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="ruleType" id="ruleTypeCreate" value="新建广告" checked required>
+              <label class="form-check-label" for="ruleTypeCreate">新建广告</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="ruleType" id="ruleTypeSupplement" value="补充广告" required>
+              <label class="form-check-label" for="ruleTypeSupplement">补充广告</label>
+            </div>
+            <div class="invalid-feedback">请选择规则类型</div>
+          </div>
+        </div>
+
+      <!-- 5. 素材形式 -->
+      <div class="form-row">
+        <div class="label-col form-label required">素材形式</div>
+        <div class="ctrl-col">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="materialForm" id="materialVideo" value="视频" checked required>
+            <label class="form-check-label" for="materialVideo">视频</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="materialForm" id="materialImage" value="图片" required>
+            <label class="form-check-label" for="materialImage">图片</label>
+          </div>
+          <div class="invalid-feedback">请选择素材形式</div>
+        </div>
+      </div>
+
+      <!-- 6. 素材来源（不指定账户时固定成片管理（手动勾选）不可变更） -->
+      <div class="form-row">
+        <div class="label-col form-label required">素材来源</div>
+        <div class="ctrl-col" id="materialSourceGroup">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="materialSource" id="sourceFinished" value="成片管理（手动勾选）" checked required>
+            <label class="form-check-label" for="sourceFinished">成片管理(手动勾选)</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="materialSource" id="sourcePack" value="素材包管理（指定素材包）" required>
+            <label class="form-check-label" for="sourcePack">素材包管理(指定素材包)</label>
+          </div>
+          <div class="invalid-feedback">请选择素材来源</div>
+        </div>
+      </div>
+      </div>
+
+      <!-- 7. 规则执行周期 -->
+      <div class="form-row">
+        <div class="label-col form-label required">规则执行周期</div>
+        <div class="ctrl-col">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="execCycle" id="cycleNone" value="无自动执行周期" checked required>
+            <label class="form-check-label" for="cycleNone">无自动执行周期</label>
+          </div>
+          <div class="invalid-feedback">请选择规则执行周期</div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+  const formEl = document.getElementById('ruleForm');
+
+  const scopeSpecificEl = document.getElementById('scopeSpecific');
+  const scopeUnspecifiedEl = document.getElementById('scopeUnspecified');
+  const specificBlock = document.getElementById('specificAccountBlock');
+  const unspecifiedHintEl = document.getElementById('unspecifiedHint');
+
+  const accountIdEl = document.getElementById('accountId');
+  const businessIdEl = document.getElementById('businessId');
+
+  const ruleTypeRadios = Array.from(document.querySelectorAll('input[name="ruleType"]'));
+  const materialSourceRadios = Array.from(document.querySelectorAll('input[name="materialSource"]'));
+  const sourceFinishedEl = document.getElementById('sourceFinished');
+
+  function setRequired(el, required) {
+    if (!el) return;
+    if (required) el.setAttribute('required', 'required');
+    else el.removeAttribute('required');
+  }
+
+  function setDisabled(el, disabled) {
+    if (!el) return;
+    el.disabled = !!disabled;
+  }
+
+  function isUnspecifiedScope() {
+    return scopeUnspecifiedEl.checked;
+  }
+
+  function applyScopeUI() {
+    const unspecified = isUnspecifiedScope();
+
+    // UI 显示/隐藏
+    specificBlock.classList.toggle('d-none', unspecified);
+    unspecifiedHintEl.classList.toggle('d-none', !unspecified);
+
+    // 指定账户：必填
+    setRequired(accountIdEl, !unspecified);
+    setRequired(businessIdEl, !unspecified);
+
+    // 不指定账户：不需要填
+    if (unspecified) {
+      accountIdEl.value = '';
+      businessIdEl.value = '';
+      accountIdEl.setCustomValidity('');
+      businessIdEl.setCustomValidity('');
+    }
+
+    // 联动：不指定账户时【规则类型】固定为“新建广告”不可变更
+    if (unspecified) {
+      const createEl = document.getElementById('ruleTypeCreate');
+      if (createEl) createEl.checked = true;
+      ruleTypeRadios.forEach(r => setDisabled(r, true));
+    } else {
+      ruleTypeRadios.forEach(r => setDisabled(r, false));
+    }
+
+    // 联动：素材来源固定“成片管理（手动勾选）”
+    if (unspecified) {
+      sourceFinishedEl.checked = true;
+      materialSourceRadios.forEach(r => setDisabled(r, true));
+    } else {
+      materialSourceRadios.forEach(r => setDisabled(r, false));
+    }
+  }
+
+  scopeSpecificEl.addEventListener('change', applyScopeUI);
+  scopeUnspecifiedEl.addEventListener('change', applyScopeUI);
+
+  // 防止回车提交刷新页面；用于触发必填校验展示
+  formEl.addEventListener('submit', (e) => {
+    e.preventDefault();
+    applyScopeUI();
+    formEl.classList.add('was-validated');
+  });
+
+  // 仅做浏览器原生校验展示
+  formEl.addEventListener('change', () => {
+    if (formEl.classList.contains('was-validated')) return;
+    // 不主动加 was-validated，避免一开始就出现红框
+  });
+
+  applyScopeUI();
+</script>
+</body>
+</html>
+
+

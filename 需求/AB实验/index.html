@@ -1,0 +1,1917 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>海外AB实验 - AB测试中心</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        :root { color-scheme: light; }
+        body { background-color: #f5f6fa; font-family:'Inter','Helvetica Neue',Arial,sans-serif; }
+        .sidebar { width: 240px; min-height: 100vh; background: #fff; }
+        .sidebar .nav-link { color: #4a4b57; border-radius: 8px; padding: 10px 12px; }
+        .sidebar .nav-link.active, .sidebar .nav-link:hover { background: #e9f2ff; color: #0d6efd; }
+        .sidebar .section-title { font-size: 12px; color: #8c8fa3; letter-spacing: .06em; text-transform: uppercase; margin: 12px 0 6px; }
+        .badge-status { min-width: 72px; }
+        .badge-pending { background: #e9ecef !important; color: #6c757d !important; }
+        .badge-running { background: #fff3cd !important; color: #856404 !important; }
+        .badge-ended { background: #d1e7dd !important; color: #0f5132 !important; }
+        .badge-create-failed { background: #f8d7da !important; color: #842029 !important; }
+        .table thead th { font-size: 13px; color: #6c6f80; text-transform: uppercase; letter-spacing: .04em; }
+        .table th, .table td { vertical-align: middle; }
+        #reportDataTable td { font-size: 13px; padding: 8px 6px; }
+        #reportDataTable th { font-size: 12px; padding: 10px 6px; white-space: nowrap; }
+        #reportDataTable td > div:first-child { font-weight: 500; margin-bottom: 2px; }
+        .pill { padding: 4px 10px; border-radius: 999px; background: #f4f6fb; color: #5c6070; font-size: 12px; margin-right: 6px; }
+        .pill-video { background: #e3f2fd; color: #1976d2; }
+        .pill-image { background: #fff3e0; color: #f57c00; }
+        .pill-mixed { background: #f3e5f5; color: #7b1fa2; }
+        .material-preview { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb; }
+        .material-video-wrapper { position: relative; width: 80px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid #e5e7eb; }
+        .material-video-wrapper video { width: 100%; height: 100%; object-fit: cover; }
+        .material-video-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255, 255, 255, 0.9); font-size: 24px; pointer-events: none; }
+        .benchmark-row { background-color: #f0f8ff !important; }
+        .benchmark-badge { display: inline-block; padding: 2px 8px; background: #0d6efd; color: white; border-radius: 4px; font-size: 11px; margin-left: 4px; }
+        .cell-better { background-color: #CFF7D3 !important; }
+        .cell-worse { background-color: #FEE9E7 !important; }
+        .compare-mode-container { padding: 12px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; margin-bottom: 16px; }
+        .card-hover { transition: transform .15s ease, box-shadow .15s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,.06); }
+        .offcanvas-body label { font-weight: 500; color: #30313d; }
+        .form-label.required::before { content: '*'; color: #dc3545; margin-right: 4px; }
+        .table-responsive { border-radius: 12px; background: #fff; }
+        .switch-cell { width: 80px; }
+        .toast-container { z-index: 1090; }
+        .offcanvas-wide { --bs-offcanvas-width: 60vw; }
+        .section-divider { font-size: 13px; font-weight: 600; color: #6c6f80; margin: 12px 0 8px; }
+        .group-card { border: 1px solid #e9ecef; border-radius: 10px; padding: 12px; margin-bottom: 12px; background: #fbfcff; }
+        .section-box { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #fff; margin-bottom: 16px; }
+        .table a.text-primary:hover { text-decoration: underline !important; }
+        .step-sidebar { width: 200px; border-right: 1px solid #e5e7eb; padding: 20px 16px; background: #f8f9fa; position: relative; }
+        .step-item { padding: 8px 0; cursor: pointer; transition: all 0.2s; display: flex; align-items: flex-start; position: relative; }
+        .step-item:hover { opacity: 0.8; }
+        .step-number { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-size: 14px; font-weight: 500; margin-right: 12px; flex-shrink: 0; transition: all 0.2s; }
+        .step-content { flex: 1; }
+        .step-title { font-size: 14px; line-height: 1.5; }
+        .step-desc { font-size: 12px; color: #909399; margin-top: 4px; line-height: 1.4; }
+        .step-item.active .step-number { background: #0d6efd; color: #fff; }
+        .step-item.active .step-title { color: #0d6efd; font-weight: 500; }
+        .step-item.completed .step-number { background: #28a745; color: #fff; }
+        .step-item.completed .step-title { color: #28a745; }
+        .step-item.pending .step-number { background: #dcdfe6; color: #909399; }
+        .step-item.pending .step-title { color: #909399; }
+        .step-check-icon { margin-left: 6px; color: #28a745; font-size: 16px; }
+        .step-item:not(:last-child)::after { content: ''; position: absolute; left: 14px; top: 28px; width: 2px; background: #dcdfe6; height: calc(100% - 8px); z-index: 0; }
+        .step-item.completed:not(:last-child)::after { background: #28a745; }
+        .step-item.active:not(:last-child)::after { background: linear-gradient(to bottom, #28a745 0%, #28a745 50%, #dcdfe6 50%, #dcdfe6 100%); }
+        .step-number { position: relative; z-index: 1; }
+        .form-content-area { flex: 1; padding: 20px; overflow-y: auto; }
+        .section-box { scroll-margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="d-flex min-vh-100">
+    <aside class="sidebar border-end">
+        <div class="p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary text-white rounded-3 p-2 me-2"><i class="bi bi-flask"></i></div>
+                <div>
+                    <div class="fw-semibold">AB测试中心</div>
+                    <div class="text-muted small">实验与数据</div>
+                </div>
+            </div>
+            <div class="section-title">导航</div>
+            <nav class="nav flex-column gap-1">
+                <a class="nav-link" href="index.html"><i class="bi bi-kanban me-2"></i>试验管理</a>
+                <a class="nav-link" href="reports.html"><i class="bi bi-bar-chart-line me-2"></i>数据报表</a>
+                <a class="nav-link" href="materials.html"><i class="bi bi-collection-play me-2"></i>素材管理</a>
+                <a class="nav-link" href="accounts.html"><i class="bi bi-person-gear me-2"></i>账户管理</a>
+                <div class="ps-1">
+                    <div class="small text-muted mt-2 mb-1">自动工具</div>
+                    <nav class="nav flex-column gap-1">
+                        <a class="nav-link" href="auto-builder.html"><i class="bi bi-rocket-takeoff me-2"></i>海外自动搭建</a>
+                        <a class="nav-link" href="../多账户批量搭建/auto-rules.html"><i class="bi bi-diagram-3 me-2"></i>海外自动规则</a>
+                        <a class="nav-link active" aria-current="page" href="index.html"><i class="bi bi-lightning-charge me-2"></i>海外AB实验</a>
+                    </nav>
+                </div>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="flex-grow-1">
+        <header class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white">
+            <div>
+                <h1 class="h3 mb-0 fw-bold">海外AB实验</h1>
+            </div>
+        </header>
+
+        <section class="px-4 py-3">
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="facebook-tab" data-bs-toggle="tab" data-bs-target="#facebook-pane" type="button" role="tab" aria-controls="facebook-pane" aria-selected="true">Facebook</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="tabContent">
+                <div class="tab-pane fade show active" id="facebook-pane" role="tabpanel" aria-labelledby="facebook-tab">
+            <div class="row g-3 mb-3">
+                <div class="col">
+                    <div class="card card-hover h-100"><div class="card-body"><div class="text-muted small">上周实验</div><div class="h4 mb-0 fw-bold" id="stat-lastweek">0</div></div></div>
+                </div>
+                <div class="col">
+                    <div class="card card-hover h-100"><div class="card-body"><div class="text-muted small">本周实验</div><div class="h4 mb-0 fw-bold" id="stat-week">0</div></div></div>
+                </div>
+                <div class="col">
+                    <div class="card card-hover h-100"><div class="card-body"><div class="text-muted small">待开启</div><div class="h4 mb-0 fw-bold" id="stat-pending">0</div></div></div>
+                </div>
+                <div class="col">
+                    <div class="card card-hover h-100"><div class="card-body"><div class="text-muted small">实验结束</div><div class="h4 mb-0 fw-bold" id="stat-ended">0</div></div></div>
+                </div>
+            </div>
+
+            <div class="bg-white border rounded p-3 mb-3">
+                <div class="row g-3 mb-3 align-items-end">
+                    <div class="col-12 col-lg-2">
+                        <label class="form-label small text-muted">实验名称</label>
+                        <select class="form-select" id="filterName"><option value="all">全部</option></select>
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <label class="form-label small text-muted">创建人</label>
+                        <select class="form-select" id="filterOwner"><option value="all">全部</option></select>
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <label class="form-label small text-muted">应用产品</label>
+                        <select class="form-select" id="filterProduct"><option value="all">全部</option></select>
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <label class="form-label small text-muted">应用账户</label>
+                        <select class="form-select" id="filterAccount"><option value="all">全部</option></select>
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <label class="form-label small text-muted">开启日期</label>
+                        <input type="date" class="form-control" id="filterStart">
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <label class="form-label small text-muted">结束日期</label>
+                        <input type="date" class="form-control" id="filterEnd">
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <label class="form-label small text-muted">实验状态</label>
+                        <select class="form-select" id="filterStatus">
+                            <option value="all">全部</option>
+                            <option value="pending">待开启</option>
+                            <option value="running">实验中</option>
+                            <option value="creating">创建中</option>
+                            <option value="create_failed">创建失败</option>
+                            <option value="ended">实验结束</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-lg-2 d-flex gap-2">
+                        <button class="btn btn-outline-secondary w-50" id="btn-reset">重置</button>
+                        <button class="btn btn-primary w-50" id="btn-apply">筛选</button>
+                    </div>
+                </div>
+
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <div></div>
+                    <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#experimentDrawer"><i class="bi bi-plus-lg me-1"></i>新建实验</button>
+                </div>
+
+                <div class="table-responsive shadow-sm">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="switch-cell">开关</th>
+                            <th>实验名称</th>
+                            <th>实验变量</th>
+                            <th>变量类型</th>
+                            <th>应用产品</th>
+                            <th>应用账户</th>
+                            <th>创建人</th>
+                            <th>实验状态</th>
+                            <th>开始日期<br><span class="text-muted small fw-normal" style="font-size: 10px;">UTC+0时区</span></th>
+                            <th>结束日期<br><span class="text-muted small fw-normal" style="font-size: 10px;">UTC+0时区</span></th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th class="text-end">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="experimentTable"></tbody>
+                </table>
+                </div>
+                
+                <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted">Total <span id="paginationTotal">0</span></span>
+                        <select class="form-select form-select-sm" id="pageSizeSelect" style="width: auto;">
+                            <option value="10">10/page</option>
+                            <option value="15" selected>15/page</option>
+                            <option value="20">20/page</option>
+                            <option value="50">50/page</option>
+                            <option value="100">100/page</option>
+                        </select>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" id="prevPageBtn" disabled>
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <div id="pageNumbers" class="d-flex align-items-center gap-1"></div>
+                        <button class="btn btn-sm btn-outline-secondary" id="nextPageBtn">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                        <div class="d-flex align-items-center gap-2 ms-3">
+                            <span class="text-muted small">Go to</span>
+                            <input type="number" class="form-control form-control-sm" id="gotoPageInput" min="1" value="1" style="width: 60px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+                </div>
+                </div>
+            </section>
+    </main>
+</div>
+
+<!-- 实验表单滑动面板 -->
+<div class="offcanvas offcanvas-end offcanvas-wide" tabindex="-1" id="experimentDrawer" aria-labelledby="experimentDrawerLabel">
+    <div class="offcanvas-header">
+        <div>
+            <h5 class="offcanvas-title" id="experimentDrawerLabel">新建实验</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-0 d-flex" style="height: calc(100vh - 57px);">
+        <div class="step-sidebar" id="stepSidebar">
+            <div class="step-item pending" data-step="basic">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                    <div class="step-title">基本信息</div>
+                </div>
+            </div>
+            <div class="step-item pending" data-step="config">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                    <div class="step-title">实验配置</div>
+                </div>
+            </div>
+            <div id="groupSteps"></div>
+        </div>
+        <div class="form-content-area">
+            <form id="experimentForm" class="needs-validation" novalidate>
+            <input type="hidden" id="experimentId">
+
+            <div class="section-box">
+                <div class="section-divider">基本信息</div>
+                <div class="mb-3">
+                    <label class="form-label required">应用产品</label>
+                    <select class="form-select" id="expProduct" required></select>
+                    <div class="invalid-feedback">请选择应用产品</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label required">应用账户</label>
+                    <select class="form-select" id="expAccount" required></select>
+                    <div class="invalid-feedback">请选择应用账户</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label required">投放阶段</label>
+                    <select class="form-select" id="expStage" required>
+                        <option value="" disabled selected>请选择投放阶段</option>
+                        <option value="测1">测1</option>
+                        <option value="测2">测2</option>
+                    </select>
+                    <div class="invalid-feedback">请选择投放阶段</div>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="section-divider">实验配置</div>
+                <div class="mb-3">
+                    <label class="form-label d-block required">实验变量</label>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="expVariable" id="varCreative" value="素材" checked required>
+                            <label class="form-check-label" for="varCreative">素材</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-block required">变量类型</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="expVariableType" id="varTypeVideo" value="视频" checked required>
+                            <label class="form-check-label" for="varTypeVideo">视频</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="expVariableType" id="varTypeImage" value="图片" required>
+                            <label class="form-check-label" for="varTypeImage">图片</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="expVariableType" id="varTypeMixed" value="混合" required>
+                            <label class="form-check-label" for="varTypeMixed">混合</label>
+                        </div>
+                    </div>
+                    <div class="invalid-feedback">请选择变量类型</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label required">实验排期</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="flex-grow-1">
+                            <input type="date" class="form-control" id="expStart" placeholder="开始日期" required>
+                            <div class="invalid-feedback">请选择开始日期</div>
+                        </div>
+                        <span class="text-muted small">至</span>
+                        <div class="flex-grow-1">
+                            <input type="date" class="form-control" id="expEnd" placeholder="结束日期" required>
+                            <div class="invalid-feedback">请选择结束日期</div>
+                        </div>
+                    </div>
+                    <div class="text-muted small mt-1">*UTC+0时区</div>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div id="groupList"></div>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-primary w-100" id="btnAddGroup">新增实验</button>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4" id="formActions">
+                <button type="submit" class="btn btn-primary flex-grow-1">保存</button>
+                <button type="button" class="btn btn-outline-secondary flex-grow-1" data-bs-dismiss="offcanvas">取消</button>
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
+<!-- 报告侧边弹窗 -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="reportDrawer" aria-labelledby="reportDrawerLabel" style="--bs-offcanvas-width: 60vw;">
+    <div class="offcanvas-header">
+        <div>
+            <h5 class="offcanvas-title" id="reportDrawerLabel">报告</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="section-box mb-3">
+            <div class="section-divider">基本信息</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <div class="text-muted small mb-1">应用产品</div>
+                        <div class="fw-semibold" id="reportProduct">-</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <div class="text-muted small mb-1">应用账户</div>
+                        <div class="fw-semibold" id="reportAccount">-</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <div class="text-muted small mb-1">开始日期</div>
+                        <div class="fw-semibold" id="reportStart">-</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <div class="text-muted small mb-1">结束日期</div>
+                        <div class="fw-semibold" id="reportEnd">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-box">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="section-divider mb-0">数据模块</div>
+                <button class="btn btn-outline-primary btn-sm" id="btn-export-report"><i class="bi bi-download me-1"></i>导出</button>
+            </div>
+            <div class="mb-3 compare-mode-container">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <label class="form-label mb-0 fw-semibold">对比方式：</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="compareMode" id="compareBenchmark" value="benchmark" checked>
+                            <label class="form-check-label" for="compareBenchmark">与标杆对比</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="compareMode" id="compareBest" value="best">
+                            <label class="form-check-label" for="compareBest">表现最优</label>
+                            <i class="bi bi-question-circle text-muted small ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="优秀值以绿色背景标识，差值以红色背景标识" style="cursor: help;"></i>
+                        </div>
+                    </div>
+                    <div class="text-muted small ms-auto" id="reportDataDate">数据日期：-</div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>素材</th>
+                            <th>广告</th>
+                            <th>展示</th>
+                            <th>点击</th>
+                            <th>安装</th>
+                            <th>花费</th>
+                            <th>CPM</th>
+                            <th>CTR</th>
+                            <th>CVR</th>
+                            <th>RR</th>
+                            <th>CPE <span class="badge bg-secondary-subtle text-secondary" style="font-size: 10px; font-weight: normal;">Level75</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportDataTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 操作记录侧边栏 -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="operationLogDrawer" aria-labelledby="operationLogDrawerLabel" style="--bs-offcanvas-width: 70vw;">
+    <div class="offcanvas-header">
+        <div>
+            <h5 class="offcanvas-title" id="operationLogDrawerLabel">操作记录</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <iframe id="operationLogFrame" src="operation-log.html" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastZone"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+    // 实验状态定义（完整版）
+    const statusText = { 
+        pending: '待开启', 
+        running: '实验中', 
+        create_failed: '创建失败', 
+        creating: '创建中', 
+        ended: '实验结束',
+        updating: '更新中',
+        update_failed: '更新失败',
+        canceled: '已取消'
+    };
+    
+    // 实验状态判断逻辑
+    /**
+     * 根据实验数据和时间判断实验状态
+     * @param {Object} exp - 实验对象
+     * @param {string} exp.start - 开始时间 (YYYY-MM-DD)
+     * @param {string} exp.end - 结束时间 (YYYY-MM-DD)
+     * @param {string} exp.canceledTime - 取消时间（可选）
+     * @param {string} exp.pendingOperation - 待处理操作：'create' | 'update' | null
+     * @param {Object} exp.lastError - 最后一次错误信息（可选）
+     * @param {string} exp.lastOperation - 最后一次操作：'create' | 'update' | null
+     * @param {string} exp.currentStatus - 当前存储的状态（用于回退）
+     * @returns {string} 计算后的状态
+     */
+    function calculateExperimentStatus(exp) {
+        const now = new Date();
+        const startTime = exp.start ? new Date(exp.start) : null;
+        const endTime = exp.end ? new Date(exp.end) : null;
+        const canceledTime = exp.canceledTime ? new Date(exp.canceledTime) : null;
+        
+        // 1. 如果实验被取消，状态为已取消
+        if (canceledTime && canceledTime <= now) {
+            return 'canceled';
+        }
+        
+        // 2. 如果有待处理的操作，返回对应状态
+        if (exp.pendingOperation === 'create') {
+            return 'creating';
+        }
+        if (exp.pendingOperation === 'update') {
+            return 'updating';
+        }
+        
+        // 3. 如果有错误信息，返回对应的失败状态
+        if (exp.lastError) {
+            if (exp.lastOperation === 'create') {
+                return 'create_failed';
+            }
+            if (exp.lastOperation === 'update') {
+                return 'update_failed';
+            }
+        }
+        
+        // 4. 时间相关的状态判断
+        if (endTime && endTime < now) {
+            // 已过结束时间
+            return 'ended';
+        }
+        
+        if (startTime && startTime <= now && endTime && now <= endTime) {
+            // 在开始和结束时间之间
+            return 'running';
+        }
+        
+        if (startTime && startTime > now) {
+            // 未到开始时间
+            return 'pending';
+        }
+        
+        // 5. 如果没有时间信息，使用当前存储的状态或默认状态
+        return exp.currentStatus || 'pending';
+    }
+    
+    /**
+     * 设置实验的待处理操作（用于创建或更新时）
+     * @param {Object} exp - 实验对象
+     * @param {string} operation - 操作类型：'create' | 'update'
+     */
+    function setPendingOperation(exp, operation) {
+        exp.pendingOperation = operation;
+        exp.lastOperation = operation;
+        exp.lastError = null; // 清除之前的错误
+    }
+    
+    /**
+     * 清除待处理操作（接口调用成功后）
+     * @param {Object} exp - 实验对象
+     * @param {boolean} success - 是否成功
+     * @param {Object} error - 错误信息（如果失败）
+     */
+    function clearPendingOperation(exp, success, error = null) {
+        if (success) {
+            exp.pendingOperation = null;
+            exp.lastError = null;
+            // 更新当前状态为计算后的状态
+            exp.currentStatus = calculateExperimentStatus(exp);
+        } else {
+            exp.pendingOperation = null;
+            exp.lastError = error;
+            // 状态会根据lastError和lastOperation自动判断为失败状态
+        }
+    }
+    
+    /**
+     * 取消实验
+     * @param {Object} exp - 实验对象
+     */
+    function cancelExperiment(exp) {
+        exp.canceledTime = new Date().toISOString().split('T')[0];
+        exp.currentStatus = 'canceled';
+    }
+
+    const productAccounts = [
+        { product: 'APP1', accounts: [ { id: '1000001', name: 'US-Account-A' }, { id: '1000002', name: 'US-Account-B' } ] },
+        { product: 'APP2', accounts: [ { id: '2000001', name: 'SEA-Account-1' }, { id: '2000002', name: 'SEA-Account-2' } ] },
+        { product: 'APP3', accounts: [ { id: '3000001', name: 'EU-Account-Alpha' } ] }
+    ];
+
+    let experiments = [
+        {
+            id: crypto.randomUUID(),
+            enabled: true,
+            name: '美国渠道标题A/B',
+            owner: 'Emma',
+            product: 'APP1',
+            accountId: '1000001',
+            accountName: 'US-Account-A',
+            status: 'running',
+            start: '2025-12-01',
+            end: '2026-01-05',
+            createdAt: '2025-11-25 14:30:25',
+            updatedAt: '2025-11-28 09:20:15',
+            trafficB: 40,
+            variables: ['素材'],
+            variableType: '视频',
+            metrics: ['CTR', 'CVR', 'ROI'],
+            desc: '测试新标题与创意素材组合对注册转化的影响'
+        },
+        {
+            id: crypto.randomUUID(),
+            enabled: false,
+            name: '美区新账户创建实验',
+            owner: 'Mia',
+            product: 'APP1',
+            accountId: '1000003',
+            accountName: 'US-Account-C',
+            status: 'create_failed',
+            start: '2025-12-10',
+            end: '2025-12-20',
+            createdAt: '2025-12-09 09:15:42',
+            updatedAt: '-',
+            trafficB: 20,
+            variables: ['素材'],
+            variableType: '图片',
+            metrics: ['CTR', 'ROI'],
+            desc: '因账户配置校验失败导致创建失败的实验示例'
+        },
+        {
+            id: crypto.randomUUID(),
+            enabled: true,
+            name: '东南亚落地页实验',
+            owner: 'Leo',
+            product: 'APP2',
+            accountId: '2000001',
+            accountName: 'SEA-Account-1',
+            status: 'pending',
+            start: '2025-12-08',
+            end: '2026-01-08',
+            createdAt: '2025-11-30 16:45:18',
+            updatedAt: '2025-12-01 10:30:22',
+            trafficB: 50,
+            variables: ['素材'],
+            variableType: '混合',
+            metrics: ['CVR', 'ROI'],
+            desc: '评估落地页调整对首日ROI的提升'
+        },
+        {
+            id: crypto.randomUUID(),
+            enabled: false,
+            name: '素材轮播频次对比',
+            owner: 'Ada',
+            product: 'APP1',
+            accountId: '1000002',
+            accountName: 'US-Account-B',
+            status: 'ended',
+            start: '2025-10-10',
+            end: '2025-11-02',
+            createdAt: '2025-09-30 11:20:33',
+            updatedAt: '2025-10-05 14:15:08',
+            trafficB: 30,
+            variables: ['素材'],
+            variableType: '图片',
+            metrics: ['CTR', '展示量'],
+            desc: '已结束实验，记录最佳频次'
+        },
+        {
+            id: crypto.randomUUID(),
+            enabled: true,
+            name: '欧洲市场新素材测试',
+            owner: 'Tom',
+            product: 'APP3',
+            accountId: '3000001',
+            accountName: 'EU-Account-Alpha',
+            status: 'creating',
+            start: '2025-12-15',
+            end: '2026-01-15',
+            createdAt: '2025-12-14 10:05:57',
+            updatedAt: '-',
+            trafficB: 35,
+            variables: ['素材'],
+            variableType: '视频',
+            metrics: ['CTR', 'CVR'],
+            desc: '正在创建中的实验示例'
+        },
+        {
+            id: crypto.randomUUID(),
+            enabled: true,
+            name: '拉美市场素材优化实验',
+            owner: 'Sophia',
+            product: 'APP2',
+            accountId: '2000002',
+            accountName: 'SEA-Account-2',
+            status: 'updating',
+            start: '2025-12-20',
+            end: '2026-01-20',
+            createdAt: '2025-12-18 15:30:45',
+            updatedAt: '2025-12-19 11:25:30',
+            trafficB: 45,
+            variables: ['素材'],
+            variableType: '视频',
+            metrics: ['CTR', 'CVR', 'ROI'],
+            desc: '正在更新中的实验示例'
+        }
+    ];
+
+    const tableBody = document.getElementById('experimentTable');
+    const filterName = document.getElementById('filterName');
+    const filterOwner = document.getElementById('filterOwner');
+    const filterProduct = document.getElementById('filterProduct');
+    const filterAccount = document.getElementById('filterAccount');
+    const filterStart = document.getElementById('filterStart');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterEnd = document.getElementById('filterEnd');
+    const applyBtn = document.getElementById('btn-apply');
+    const resetBtn = document.getElementById('btn-reset');
+
+    const offcanvasEl = document.getElementById('experimentDrawer');
+    const offcanvas = new bootstrap.Offcanvas(offcanvasEl);
+    const reportDrawer = new bootstrap.Offcanvas(document.getElementById('reportDrawer'));
+    const formEl = document.getElementById('experimentForm');
+    const formActions = document.getElementById('formActions');
+
+    let formMode = 'create';
+    
+    // 分页相关变量
+    let currentPage = 1;
+    let pageSize = 15;
+    let filteredData = [];
+
+    function todayISO() {
+        const d = new Date();
+        const iso = d.toISOString().split('T')[0];
+        return iso;
+    }
+
+    function offsetDateISO(offsetDays) {
+        const d = new Date();
+        d.setDate(d.getDate() + offsetDays);
+        return d.toISOString().split('T')[0];
+    }
+
+    function getCurrentDateTime() {
+        const d = new Date();
+        const date = d.toISOString().split('T')[0];
+        const time = d.toTimeString().split(' ')[0];
+        return `${date} ${time}`;
+    }
+
+    function getAccountOptions(productValue) {
+        if (!productValue || productValue === 'all') {
+            return productAccounts.flatMap(p => p.accounts.map(acc => ({ ...acc, product: p.product })));
+        }
+        const match = productAccounts.find(p => p.product === productValue);
+        return match ? match.accounts.map(acc => ({ ...acc, product: match.product })) : [];
+    }
+
+    function populateFilterOptions() {
+        const names = ['all', ...new Set(experiments.map(e => e.name))];
+        const owners = ['all', ...new Set(experiments.map(e => e.owner))];
+        const products = ['all', ...new Set(experiments.map(e => e.product))];
+        filterName.innerHTML = names.map(v => `<option value="${v}">${v === 'all' ? '全部' : v}</option>`).join('');
+        filterOwner.innerHTML = owners.map(v => `<option value="${v}">${v === 'all' ? '全部' : v}</option>`).join('');
+        filterProduct.innerHTML = products.map(v => `<option value="${v}">${v === 'all' ? '全部' : v}</option>`).join('');
+        renderAccountFilterOptions(filterProduct.value);
+    }
+
+    function renderAccountFilterOptions(productValue) {
+        const accounts = getAccountOptions(productValue);
+        const options = ['<option value="all">全部</option>', ...accounts.map(acc => `<option value="${acc.id}">${acc.name}（${acc.id}）</option>`)];
+        filterAccount.innerHTML = options.join('');
+        if (productValue !== 'all' && filterAccount.value !== 'all') {
+            filterAccount.value = 'all';
+        }
+    }
+
+    function populateFormProductOptions() {
+        const options = productAccounts.map(p => `<option value="${p.product}">${p.product}</option>`).join('');
+        document.getElementById('expProduct').innerHTML = `<option value="" disabled selected>请选择</option>${options}`;
+        renderFormAccountOptions(document.getElementById('expProduct').value);
+    }
+
+    function renderFormAccountOptions(productValue, selectedId) {
+        const accounts = getAccountOptions(productValue);
+        const opts = ['<option value="" disabled selected>请选择</option>', ...accounts.map(acc => `<option value="${acc.id}">${acc.name}（${acc.id}）</option>`)];
+        document.getElementById('expAccount').innerHTML = opts.join('');
+        if (selectedId) document.getElementById('expAccount').value = selectedId;
+    }
+
+    function statusOrder(value) {
+        return ['running', 'pending', 'creating', 'create_failed', 'ended'].indexOf(value);
+    }
+
+    function sortByStatusAndDate(list) {
+        return [...list].sort((a, b) => {
+            const statusDiff = statusOrder(a.status) - statusOrder(b.status);
+            if (statusDiff !== 0) return statusDiff;
+            return new Date(b.start) - new Date(a.start);
+        });
+    }
+
+    function renderStats(list) {
+        const now = new Date();
+        const lastWeekStart = new Date(now);
+        lastWeekStart.setDate(now.getDate() - 14);
+        const lastWeekEnd = new Date(now);
+        lastWeekEnd.setDate(now.getDate() - 7);
+        const lastWeek = list.filter(i => {
+            const start = new Date(i.start);
+            return start >= lastWeekStart && start < lastWeekEnd;
+        }).length;
+        const thisWeek = list.filter(i => {
+            const start = new Date(i.start);
+            const diff = (now - start) / (1000 * 60 * 60 * 24);
+            return diff <= 7 && diff >= 0;
+        }).length;
+        const pending = list.filter(i => i.status === 'pending').length;
+        const ended = list.filter(i => i.status === 'ended').length;
+        document.getElementById('stat-lastweek').textContent = lastWeek;
+        document.getElementById('stat-week').textContent = thisWeek;
+        document.getElementById('stat-pending').textContent = pending;
+        document.getElementById('stat-ended').textContent = ended;
+    }
+
+    function formatAccountId(id) {
+        const digits = (id || '').replace(/\\D/g, '');
+        return digits ? digits.padStart(7, '0') : '0000000';
+    }
+
+    function formatCreatedAt(createdAt) {
+        if (!createdAt || createdAt === '-') return '-';
+        // 如果包含空格，说明有日期和时间
+        if (createdAt.includes(' ')) {
+            const [date, time] = createdAt.split(' ');
+            return `${date}<br><span class="text-muted small">${time}</span>`;
+        }
+        // 如果只有日期，返回日期
+        return createdAt;
+    }
+    
+    function formatUpdatedAt(updatedAt) {
+        return formatCreatedAt(updatedAt);
+    }
+
+    function renderTable() {
+        let filtered = [...experiments];
+        if (filterName.value !== 'all') filtered = filtered.filter(e => e.name === filterName.value);
+        if (filterOwner.value !== 'all') filtered = filtered.filter(e => e.owner === filterOwner.value);
+        if (filterProduct.value !== 'all') filtered = filtered.filter(e => e.product === filterProduct.value);
+        if (filterAccount.value !== 'all') filtered = filtered.filter(e => e.accountId === filterAccount.value);
+        if (filterStatus.value !== 'all') filtered = filtered.filter(e => e.status === filterStatus.value);
+        if (filterStart.value) filtered = filtered.filter(e => e.start >= filterStart.value);
+        if (filterEnd.value) filtered = filtered.filter(e => e.end && e.end <= filterEnd.value);
+
+        renderStats(filtered);
+        filteredData = sortByStatusAndDate(filtered);
+        
+        // 分页处理
+        const totalPages = Math.ceil(filteredData.length / pageSize);
+        if (currentPage > totalPages && totalPages > 0) {
+            currentPage = totalPages;
+        }
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedData = filteredData.slice(startIndex, endIndex);
+        
+        // 渲染表格
+        tableBody.innerHTML = paginatedData.map(item => `
+            <tr>
+                <td class="switch-cell">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" ${item.enabled ? 'checked' : ''} ${item.enabled ? '' : 'disabled'} onchange="toggleExperiment('${item.id}', this)">
+                </div>
+                </td>
+                <td>
+                    <div class="fw-semibold">${item.name}</div>
+                </td>
+                <td>${item.variables.map(v => `<span class="pill">${v}</span>`).join('')}</td>
+                <td>${item.variableType ? `<span class="pill pill-${item.variableType === '视频' ? 'video' : item.variableType === '图片' ? 'image' : 'mixed'}">${item.variableType}</span>` : '-'}</td>
+                <td>${item.product}</td>
+                <td>${item.accountName}<br><span class="text-muted small">${formatAccountId(item.accountId)}</span></td>
+                <td>${item.owner}</td>
+                <td>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="badge ${
+                            item.status === 'pending'
+                                ? 'badge-pending'
+                                : item.status === 'running'
+                                    ? 'badge-running'
+                                    : item.status === 'ended'
+                                        ? 'badge-ended'
+                                        : item.status === 'create_failed'
+                                            ? 'badge-create-failed'
+                                            : item.status === 'creating'
+                                                ? 'bg-info-subtle text-info'
+                                                : item.status === 'updating'
+                                                    ? 'bg-info-subtle text-info'
+                                                    : 'bg-secondary-subtle text-secondary'
+                        } badge-status">
+                            ${statusText[item.status] || item.status}
+                        </span>
+                        ${item.status === 'create_failed' 
+                            ? `<i class="bi bi-question-circle text-muted small" data-bs-toggle="tooltip" data-bs-placement="top" title="接口创建失败" style="cursor: help;"></i>` 
+                            : ''}
+                    </div>
+                </td>
+                <td>${item.start}</td>
+                <td>${item.end || '-'}</td>
+                <td>${formatCreatedAt(item.createdAt)}</td>
+                <td>${formatUpdatedAt(item.updatedAt)}</td>
+                <td class="text-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="javascript:void(0)" class="text-primary text-decoration-none" onclick="viewExperiment('${item.id}')">查看</a>
+                        <span class="text-muted">|</span>
+                        <a href="javascript:void(0)" class="text-primary text-decoration-none" onclick="editExperiment('${item.id}', 'copy')">复制</a>
+                        <span class="text-muted">|</span>
+                        ${item.status === 'ended' || item.status === 'creating' || item.status === 'updating'
+                            ? '<span class="text-muted">编辑</span>' 
+                            : `<a href="javascript:void(0)" class="text-primary text-decoration-none" onclick="editExperiment('${item.id}', 'edit')">编辑</a>`}
+                        <span class="text-muted">|</span>
+                        ${item.enabled || item.status === 'creating' || item.status === 'updating'
+                            ? '<span class="text-muted">删除</span>' 
+                            : `<a href="javascript:void(0)" class="text-primary text-decoration-none" onclick="deleteExperiment('${item.id}')">删除</a>`}
+                        <span class="text-muted">|</span>
+                        ${item.status === 'ended' || item.status === 'running'
+                            ? `<a href="javascript:void(0)" class="text-primary text-decoration-none" onclick="openReport('${item.id}')">报告</a>` 
+                            : '<span class="text-muted">报告</span>'}
+                        <span class="text-muted">|</span>
+                        <a href="javascript:void(0)" class="text-primary text-decoration-none position-relative d-inline-flex align-items-center" onclick="openOperationLog('${item.id}')">
+                            操作记录
+                            ${hasLatestOperationFailed(item.id) ? '<i class="bi bi-exclamation-circle-fill text-danger ms-1" style="font-size: 12px;" title="最新操作失败"></i>' : ''}
+                        </a>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+        // 初始化tooltip
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // 更新分页UI
+        renderPagination(filteredData.length);
+    }
+    
+    function renderPagination(total) {
+        const totalPages = Math.ceil(total / pageSize);
+        document.getElementById('paginationTotal').textContent = total;
+        document.getElementById('gotoPageInput').value = currentPage;
+        document.getElementById('gotoPageInput').max = totalPages || 1;
+        
+        // 更新上一页/下一页按钮状态
+        document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+        document.getElementById('nextPageBtn').disabled = currentPage >= totalPages || totalPages === 0;
+        
+        // 渲染页码
+        const pageNumbers = document.getElementById('pageNumbers');
+        pageNumbers.innerHTML = '';
+        
+        if (totalPages === 0) {
+            return;
+        }
+        
+        // 显示最多5个页码
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+        
+        if (endPage - startPage < 4) {
+            if (startPage === 1) {
+                endPage = Math.min(5, totalPages);
+            } else {
+                startPage = Math.max(1, totalPages - 4);
+            }
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-secondary'}`;
+            pageBtn.textContent = i;
+            pageBtn.onclick = () => goToPage(i);
+            pageNumbers.appendChild(pageBtn);
+        }
+    }
+    
+    function goToPage(page) {
+        const totalPages = Math.ceil(filteredData.length / pageSize);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        renderTable();
+    }
+    
+    function changePageSize(newSize) {
+        pageSize = parseInt(newSize);
+        currentPage = 1;
+        renderTable();
+    }
+
+    function openReport(id) {
+        const exp = experiments.find(i => i.id === id);
+        if (!exp) return;
+        
+        // 设置标题
+        document.getElementById('reportDrawerLabel').textContent = `${exp.name}-报告`;
+        
+        // 填充基本信息
+        document.getElementById('reportProduct').textContent = exp.product || '-';
+        document.getElementById('reportAccount').textContent = `${exp.accountName}（${exp.accountId}）` || '-';
+        document.getElementById('reportStart').textContent = exp.start || '-';
+        document.getElementById('reportEnd').textContent = exp.end || '-';
+        
+        // 计算并显示数据日期范围（实验开始日期 - 1天 至 实验结束日期 - 1天）
+        let dataDateRange = '-';
+        if (exp.start) {
+            const startDate = new Date(exp.start);
+            startDate.setDate(startDate.getDate() - 1);
+            const startYear = startDate.getFullYear();
+            const startMonth = String(startDate.getMonth() + 1).padStart(2, '0');
+            const startDay = String(startDate.getDate()).padStart(2, '0');
+            const startDateStr = `${startYear}-${startMonth}-${startDay}`;
+            
+            let endDateStr = '-';
+            if (exp.end) {
+                const endDate = new Date(exp.end);
+                endDate.setDate(endDate.getDate() - 1);
+                const endYear = endDate.getFullYear();
+                const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+                const endDay = String(endDate.getDate()).padStart(2, '0');
+                endDateStr = `${endYear}-${endMonth}-${endDay}`;
+            }
+            
+            dataDateRange = `${startDateStr} ~ ${endDateStr}`;
+        }
+        document.getElementById('reportDataDate').textContent = `数据日期：${dataDateRange}`;
+        
+        // 生成模拟数据表格
+        const tableBody = document.getElementById('reportDataTable');
+        const reportData = generateReportData(exp);
+        renderReportTable(reportData);
+        
+        // 添加对比方式改变事件监听
+        document.querySelectorAll('input[name="compareMode"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                renderReportTable(reportData);
+            });
+        });
+        
+        reportDrawer.show();
+        
+        // 初始化tooltip
+        setTimeout(() => {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }, 100);
+    }
+    
+    function renderReportTable(reportData) {
+        const tableBody = document.getElementById('reportDataTable');
+        const compareMode = document.querySelector('input[name="compareMode"]:checked')?.value || 'benchmark';
+        
+        // 获取标杆数据（第一行）
+        const benchmark = reportData[0];
+        
+        // 计算每个指标的最大值和最小值（用于"表现最优"模式）
+        const maxValues = {
+            impressions: Math.max(...reportData.map(r => parseFloat(r.impressions))),
+            clicks: Math.max(...reportData.map(r => parseFloat(r.clicks))),
+            installs: Math.max(...reportData.map(r => parseFloat(r.installs))),
+            spend: Math.max(...reportData.map(r => parseFloat(r.spend))),
+            cpm: Math.max(...reportData.map(r => parseFloat(r.cpm))),
+            ctr: Math.max(...reportData.map(r => parseFloat(r.ctr))),
+            cvr: Math.max(...reportData.map(r => parseFloat(r.cvr))),
+            rr: Math.max(...reportData.map(r => parseFloat(r.rr))),
+            cpe: Math.max(...reportData.map(r => parseFloat(r.cpe)))
+        };
+        const minValues = {
+            impressions: Math.min(...reportData.map(r => parseFloat(r.impressions))),
+            clicks: Math.min(...reportData.map(r => parseFloat(r.clicks))),
+            installs: Math.min(...reportData.map(r => parseFloat(r.installs))),
+            spend: Math.min(...reportData.map(r => parseFloat(r.spend))),
+            cpm: Math.min(...reportData.map(r => parseFloat(r.cpm))),
+            ctr: Math.min(...reportData.map(r => parseFloat(r.ctr))),
+            cvr: Math.min(...reportData.map(r => parseFloat(r.cvr))),
+            rr: Math.min(...reportData.map(r => parseFloat(r.rr))),
+            cpe: Math.min(...reportData.map(r => parseFloat(r.cpe)))
+        };
+        
+        tableBody.innerHTML = reportData.map((row, idx) => {
+            const isBenchmark = idx === 0;
+            
+            // 辅助函数：计算单元格背景色类
+            function getCellClass(value, metric, isCPM = false) {
+                if (isBenchmark) return ''; // 标杆行不应用对比色
+                
+                let isBetter = false;
+                if (compareMode === 'benchmark') {
+                    // 与标杆对比
+                    const benchmarkValue = parseFloat(benchmark[metric]);
+                    const currentValue = parseFloat(value);
+                    if (isCPM) {
+                        isBetter = currentValue < benchmarkValue; // CPM越低越好
+                    } else {
+                        isBetter = currentValue > benchmarkValue; // 其他指标越高越好
+                    }
+                } else {
+                    // 表现最优：最高值绿色，最低值红色
+                    const maxValue = maxValues[metric];
+                    const minValue = minValues[metric];
+                    const currentValue = parseFloat(value);
+                    
+                    if (isCPM) {
+                        // CPM相反：最低值绿色，最高值红色
+                        const isMin = Math.abs(currentValue - minValue) < 0.001;
+                        const isMax = Math.abs(currentValue - maxValue) < 0.001;
+                        if (isMin) return 'cell-better'; // 最低值绿色
+                        if (isMax) return 'cell-worse'; // 最高值红色
+                    } else {
+                        // 其他指标：最高值绿色，最低值红色
+                        const isMax = Math.abs(currentValue - maxValue) < 0.001;
+                        const isMin = Math.abs(currentValue - minValue) < 0.001;
+                        if (isMax) return 'cell-better'; // 最高值绿色
+                        if (isMin) return 'cell-worse'; // 最低值红色
+                    }
+                    return ''; // 其他值不显示背景色
+                }
+                
+                return isBetter ? 'cell-better' : 'cell-worse';
+            }
+            
+            // 辅助函数：生成与标杆的差异显示
+            function getDiffDisplay(value, metric, isCPM = false, isPercent = false) {
+                if (isBenchmark || compareMode !== 'benchmark') return ''; // 标杆行或非标杆对比模式不显示差异
+                
+                const benchmarkValue = parseFloat(benchmark[metric]);
+                const currentValue = parseFloat(value);
+                const diff = currentValue - benchmarkValue;
+                const diffPercent = benchmarkValue !== 0 ? (diff / benchmarkValue * 100) : 0;
+                
+                // CPE是成本指标，越低越好（类似CPM）
+                const isCostMetric = isCPM || metric === 'cpe';
+                
+                // 整数字段：展示、点击、安装
+                const isIntegerMetric = ['impressions', 'clicks', 'installs'].includes(metric);
+                
+                // CTR、CVR、RR 这三个指标只显示百分比，不显示差值
+                const percentOnlyMetrics = ['ctr', 'cvr', 'rr'];
+                const isPercentOnly = percentOnlyMetrics.includes(metric);
+                
+                let isHigher = currentValue > benchmarkValue;
+                let isBetter = false;
+                if (isCostMetric) {
+                    isBetter = currentValue < benchmarkValue; // 成本越低越好
+                } else {
+                    isBetter = currentValue > benchmarkValue; // 其他指标越高越好
+                }
+                
+                const arrowIcon = isHigher ? 'bi-arrow-up' : 'bi-arrow-down';
+                const arrowColor = isCostMetric ? (isHigher ? 'text-danger' : 'text-success') : (isHigher ? 'text-success' : 'text-danger');
+                
+                let mainValue;
+                let diffText = '';
+                
+                if (isPercent || isPercentOnly) {
+                    // CTR、CVR、RR 只显示百分比
+                    mainValue = `${diffPercent > 0 ? '+' : ''}${diffPercent.toFixed(2)}%`;
+                } else {
+                    // 其他指标：主要显示比例，括号内显示差值
+                    mainValue = `${diffPercent > 0 ? '+' : ''}${diffPercent.toFixed(2)}%`;
+                    // 生成差值文本
+                    if (isIntegerMetric) {
+                        // 整数字段：显示整数，无小数点
+                        diffText = `(${diff > 0 ? '+' : ''}${Math.round(Math.abs(diff))})`;
+                    } else {
+                        // 其他字段：显示2位小数
+                        diffText = `(${diff > 0 ? '+' : ''}${formatNumber(Math.abs(diff), 2)})`;
+                    }
+                }
+                
+                if (isPercent || isPercentOnly) {
+                    // CTR、CVR、RR 只显示百分比，单行显示
+                    return `<div class="d-flex align-items-center gap-1 mt-1">
+                        <i class="bi ${arrowIcon} ${arrowColor}" style="font-size: 11px;"></i>
+                        <span class="text-muted small">${mainValue}</span>
+                    </div>`;
+                } else {
+                    // 其他指标：比例和差值换行显示，更紧凑美观
+                    return `<div class="mt-1" style="line-height: 1.4;">
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi ${arrowIcon} ${arrowColor}" style="font-size: 11px;"></i>
+                            <span class="text-muted small">${mainValue}</span>
+                </div>
+                        <div class="text-muted" style="font-size: 10px; padding-left: 16px; opacity: 0.75;">${diffText}</div>
+                    </div>`;
+                }
+            }
+            // 使用随机图片作为占位符，根据素材类型使用不同的图片
+            const seed = (reportData[0].campaign + idx).split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
+            const videoImgId = Math.abs(seed) % 1000;
+            const imageImgId = Math.abs(seed + 1) % 1000;
+            
+            return `
+            <tr class="${isBenchmark ? 'benchmark-row' : ''}">
+                <td>
+                    ${row.material === '视频' 
+                        ? `<div class="material-video-wrapper">
+                            <img src="https://picsum.photos/seed/video${videoImgId}/80/60" alt="视频素材" class="material-preview" onerror="this.src='data:image/svg+xml,${encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"60\"><rect width=\"80\" height=\"60\" fill=\"#1976d2\"/></svg>')}'">
+                            <i class="bi bi-play-circle-fill material-video-play-icon"></i>
+                           </div>`
+                        : row.material === '图片'
+                            ? `<img src="https://picsum.photos/seed/image${imageImgId}/80/60" alt="图片素材" class="material-preview" onerror="this.src='data:image/svg+xml,${encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"60\"><rect width=\"80\" height=\"60\" fill=\"#f57c00\"/></svg>')}'">`
+                            : `<div class="d-flex gap-1">
+                                <div class="material-video-wrapper">
+                                    <img src="https://picsum.photos/seed/video${videoImgId}/38/60" alt="视频" class="material-preview" style="width: 38px;" onerror="this.src='data:image/svg+xml,${encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"38\" height=\"60\"><rect width=\"38\" height=\"60\" fill=\"#1976d2\"/></svg>')}'">
+                                    <i class="bi bi-play-circle-fill material-video-play-icon" style="font-size: 16px;"></i>
+                </div>
+                                <img src="https://picsum.photos/seed/image${imageImgId}/38/60" alt="图片" class="material-preview" style="width: 38px;" onerror="this.src='data:image/svg+xml,${encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"38\" height=\"60\"><rect width=\"38\" height=\"60\" fill=\"#f57c00\"/></svg>')}'">
+                               </div>`
+                    }
+                    ${isBenchmark ? '<span class="benchmark-badge">标杆</span>' : ''}
+                </td>
+                <td>
+                    <div class="small">campaign:${row.campaign}</div>
+                    <div class="small">adset:${row.adset}</div>
+                    <div class="small">ad:${row.ad}</div>
+                    <div class="small">素材：${row.ad}.mp4</div>
+                </td>
+                <td class="${getCellClass(row.impressions, 'impressions')}">
+                    <div>${formatNumber(row.impressions)}</div>
+                    ${getDiffDisplay(row.impressions, 'impressions')}
+                </td>
+                <td class="${getCellClass(row.clicks, 'clicks')}">
+                    <div>${formatNumber(row.clicks)}</div>
+                    ${getDiffDisplay(row.clicks, 'clicks')}
+                </td>
+                <td class="${getCellClass(row.installs, 'installs')}">
+                    <div>${formatNumber(row.installs)}</div>
+                    ${getDiffDisplay(row.installs, 'installs')}
+                </td>
+                <td class="${getCellClass(row.spend, 'spend')}">
+                    <div>${formatNumber(row.spend, 2)}</div>
+                    ${getDiffDisplay(row.spend, 'spend')}
+                </td>
+                <td class="${getCellClass(row.cpm, 'cpm', true)}">
+                    <div>${formatNumber(row.cpm, 2)}</div>
+                    ${getDiffDisplay(row.cpm, 'cpm', true)}
+                </td>
+                <td class="${getCellClass(row.ctr, 'ctr')}">
+                    <div>${formatNumber(row.ctr, 2)}%</div>
+                    ${getDiffDisplay(row.ctr, 'ctr', false, true)}
+                </td>
+                <td class="${getCellClass(row.cvr, 'cvr')}">
+                    <div>${formatNumber(row.cvr, 2)}%</div>
+                    ${getDiffDisplay(row.cvr, 'cvr', false, true)}
+                </td>
+                <td class="${getCellClass(row.rr, 'rr')}">
+                    <div>${formatNumber(row.rr, 2)}%</div>
+                    ${getDiffDisplay(row.rr, 'rr', false, true)}
+                </td>
+                <td class="${getCellClass(row.cpe, 'cpe', true)}">
+                    <div>${formatNumber(row.cpe, 2)}</div>
+                    ${getDiffDisplay(row.cpe, 'cpe', true)}
+                </td>
+            </tr>
+            `;
+        }).join('');
+        
+        reportDrawer.show();
+    }
+
+    function generateReportData(exp) {
+        // 根据实验的变量类型生成数据，至少生成4行
+        const materials = exp.variableType === '混合' ? ['视频', '图片'] : [exp.variableType];
+        const data = [];
+        const totalRows = 4;
+        
+        for (let i = 0; i < totalRows; i++) {
+            // 如果是混合类型，交替使用视频和图片；否则使用单一类型
+            const material = exp.variableType === '混合' 
+                ? (i % 2 === 0 ? '视频' : '图片')
+                : exp.variableType;
+            
+            data.push({
+                material: material,
+                campaign: `Campaign_${exp.id.substring(0, 8)}_${i + 1}`,
+                adset: `Adset_${exp.id.substring(0, 8)}_${i + 1}`,
+                ad: `Ad_${exp.id.substring(0, 8)}_${i + 1}`,
+                impressions: Math.floor(Math.random() * 50000) + 10000,
+                clicks: Math.floor(Math.random() * 5000) + 500,
+                installs: Math.floor(Math.random() * 500) + 50,
+                spend: (Math.random() * 1000 + 100).toFixed(2),
+                cpm: (Math.random() * 10 + 2).toFixed(2),
+                ctr: (Math.random() * 5 + 1).toFixed(2),
+                cvr: (Math.random() * 10 + 2).toFixed(2),
+                rr: (Math.random() * 3 + 1).toFixed(2),
+                cpe: (Math.random() * 5 + 1).toFixed(2)
+            });
+        }
+        
+        return data;
+    }
+
+    function formatNumber(num, decimals = 0) {
+        if (typeof num === 'string') num = parseFloat(num);
+        if (isNaN(num)) return '0';
+        return num.toFixed(decimals);
+    }
+
+    function resetForm() {
+        formEl.reset();
+        document.getElementById('experimentId').value = '';
+        document.getElementById('experimentDrawerLabel').textContent = '新建实验';
+        setFormDisabled(false);
+        formMode = 'create';
+        setDateDefaults();
+        setVariableTypeRadio('视频');
+        initGroups();
+        setTimeout(() => {
+            setupScrollListener();
+            updateAllStepStatuses();
+        }, 100);
+        // 创建人字段已移除，保持 owner 默认为"未指定"
+    }
+
+    function fillForm(exp) {
+        document.getElementById('experimentId').value = exp.id;
+        document.getElementById('expProduct').value = exp.product;
+        renderFormAccountOptions(exp.product, exp.accountId);
+        document.getElementById('expStage').value = exp.stage || '';
+        const startEl = document.getElementById('expStart');
+        const endEl = document.getElementById('expEnd');
+        const today = todayISO();
+        const minVal = exp.start && exp.start < today ? exp.start : today;
+        startEl.min = minVal;
+        endEl.min = minVal;
+        startEl.value = exp.start;
+        endEl.value = exp.end || '';
+        Array.from(document.getElementById('expMetrics').options).forEach(opt => { opt.selected = exp.metrics.includes(opt.value); });
+        document.getElementById('expDesc').value = exp.desc || '';
+        setVariableRadio('素材');
+        setVariableTypeRadio(exp.variableType || '视频');
+        renderGroups(exp.groups && exp.groups.length ? exp.groups : null);
+        setTimeout(() => {
+            setupScrollListener();
+            updateAllStepStatuses();
+        }, 100);
+    }
+
+    function setFormDisabled(disabled) {
+        Array.from(formEl.elements).forEach(el => {
+            if (el.id !== 'experimentId') el.disabled = disabled;
+        });
+        formActions.style.display = disabled ? 'none' : 'flex';
+        document.getElementById('btnAddGroup').style.display = disabled ? 'none' : 'inline-flex';
+    }
+
+    function viewExperiment(id) {
+        const exp = experiments.find(i => i.id === id);
+        if (!exp) return;
+        fillForm(exp);
+        formMode = 'view';
+        setFormDisabled(true);
+        document.getElementById('experimentDrawerLabel').textContent = '查看实验';
+        offcanvas.show();
+    }
+
+    function editExperiment(id, mode = 'edit') {
+        const exp = experiments.find(i => i.id === id);
+        if (!exp) return;
+        formMode = mode;
+        setFormDisabled(false);
+        fillForm(mode === 'copy' ? { ...exp, id: '', name: `${exp.name}-复制` } : exp);
+        document.getElementById('experimentDrawerLabel').textContent = mode === 'copy' ? '复制实验' : '编辑实验';
+        offcanvas.show();
+    }
+
+    function copyExperiment(id) { editExperiment(id, 'copy'); }
+
+    // 生成操作记录数据（与operation-log.html中的逻辑保持一致）
+    function generateOperationLogsForCheck(expId) {
+        // 模拟实验数据（实际应该从API获取）
+        const exp = experiments.find(e => e.id === expId);
+        if (!exp) return [];
+        
+        const logs = [];
+        
+        // 创建操作记录（每个实验一条）
+        if (exp.groups && exp.groups.length > 0) {
+            const createLogs = [];
+            exp.groups.forEach((group, index) => {
+                createLogs.push({
+                    operationType: 'create',
+                    startTime: `2025-11-25 14:${30 + index}:25`,
+                    result: 'failed' // 默认都是失败
+                });
+            });
+            
+            // 最新一条创建设置为成功
+            if (createLogs.length > 0) {
+                createLogs[createLogs.length - 1].result = 'success';
+            }
+            
+            logs.push(...createLogs);
+        }
+        
+        // 更新操作记录（模拟数据）
+        // 更新1
+        logs.push({
+            operationType: 'update',
+            startTime: '2025-11-28 09:20:10',
+            result: 'success'
+        });
+        
+        // 更新2
+        logs.push({
+            operationType: 'update',
+            startTime: '2025-11-29 10:15:20',
+            result: 'success'
+        });
+        
+        // 更新3（最新一条，模拟失败）
+        logs.push({
+            operationType: 'update',
+            startTime: '2025-12-01 14:30:10',
+            result: 'failed' // 最新操作失败
+        });
+        
+        return logs;
+    }
+    
+    // 检查实验的最新操作记录是否为失败
+    function hasLatestOperationFailed(expId) {
+        const logs = generateOperationLogsForCheck(expId);
+        if (logs.length === 0) return false;
+        
+        // 按时间排序，获取最新一条
+        const sortedLogs = logs.sort((a, b) => {
+            const timeA = a.startTime || '';
+            const timeB = b.startTime || '';
+            return timeB.localeCompare(timeA);
+        });
+        
+        const latestLog = sortedLogs[0];
+        return latestLog && latestLog.result === 'failed';
+    }
+    
+    function openOperationLog(id) {
+        const exp = experiments.find(i => i.id === id);
+        if (!exp) return;
+        
+        // 设置iframe的src，传递实验ID
+        const frame = document.getElementById('operationLogFrame');
+        frame.src = `operation-log.html?id=${id}`;
+        
+        // 显示侧边栏
+        const operationLogDrawer = new bootstrap.Offcanvas(document.getElementById('operationLogDrawer'));
+        operationLogDrawer.show();
+    }
+    
+    function deleteExperiment(id) {
+        const exp = experiments.find(i => i.id === id);
+        if (!exp) return;
+        if (confirm(`确认删除${exp.name}？`)) {
+            experiments = experiments.filter(i => i.id !== id);
+            renderTable();
+            showToast('规则组已删除');
+        }
+    }
+
+    function toggleExperiment(id, checkboxEl) {
+        const exp = experiments.find(i => i.id === id);
+        if (!exp) return;
+        const targetState = checkboxEl.checked;
+        if (!targetState) {
+            const ok = confirm('实验关闭后不可开启，是否确认关闭实验？');
+            if (ok) {
+                exp.enabled = false;
+                checkboxEl.checked = false;
+                checkboxEl.disabled = true;
+                showToast('实验已关闭');
+            } else {
+                checkboxEl.checked = true;
+            }
+        }
+    }
+
+    function showToast(message) {
+        const toastZone = document.getElementById('toastZone');
+        const toastEl = document.createElement('div');
+        toastEl.className = 'toast align-items-center text-bg-dark border-0';
+        toastEl.role = 'alert';
+        toastEl.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>`;
+        toastZone.appendChild(toastEl);
+        const toast = new bootstrap.Toast(toastEl, { delay: 2000 });
+        toast.show();
+    }
+
+    function setDateDefaults() {
+        const startEl = document.getElementById('expStart');
+        const endEl = document.getElementById('expEnd');
+        const today = todayISO();
+        const plus3 = offsetDateISO(3);
+        startEl.min = today;
+        endEl.min = today;
+        startEl.value = today;
+        endEl.value = plus3;
+    }
+
+    function setVariableRadio(value) {
+        document.querySelectorAll('input[name="expVariable"]').forEach(r => { r.checked = r.value === value; });
+    }
+
+    function setVariableTypeRadio(value) {
+        document.querySelectorAll('input[name="expVariableType"]').forEach(r => { r.checked = r.value === value; });
+    }
+
+    function renderStepSidebar(groupCount) {
+        const groupStepsEl = document.getElementById('groupSteps');
+        groupStepsEl.innerHTML = '';
+        const count = groupCount || 1;
+        for (let i = 0; i < count; i++) {
+            const stepItem = document.createElement('div');
+            stepItem.className = 'step-item pending';
+            stepItem.setAttribute('data-step', `group${i + 1}`);
+            stepItem.innerHTML = `
+                <span class="step-number">${i + 3}</span>
+                <div class="step-content">
+                    <div class="step-title">实验${i + 1}</div>
+        </div>
+            `;
+            groupStepsEl.appendChild(stepItem);
+        }
+        updateAllStepStatuses();
+        setupScrollListener();
+    }
+
+    function scrollToStep(stepId) {
+        let targetElement;
+        if (stepId === 'basic') {
+            targetElement = document.querySelector('.section-box:first-of-type');
+        } else if (stepId === 'config') {
+            const boxes = document.querySelectorAll('.section-box');
+            targetElement = boxes[0] ? boxes[0].nextElementSibling : null;
+            if (!targetElement || !targetElement.classList.contains('section-box')) {
+                targetElement = document.querySelectorAll('.section-box')[1];
+            }
+        } else if (stepId.startsWith('group')) {
+            const groupIndex = parseInt(stepId.replace('group', '')) - 1;
+            const groupCards = document.querySelectorAll('#groupList .group-card');
+            if (groupCards[groupIndex]) {
+                targetElement = groupCards[groupIndex];
+            }
+        }
+        if (targetElement) {
+            const formContentArea = document.querySelector('.form-content-area');
+            const offsetTop = targetElement.offsetTop - formContentArea.offsetTop;
+            formContentArea.scrollTo({ top: offsetTop - 20, behavior: 'smooth' });
+            updateActiveStep(stepId);
+        }
+    }
+
+    function checkStepCompletion(stepId) {
+        if (stepId === 'basic') {
+            const product = document.getElementById('expProduct')?.value;
+            const account = document.getElementById('expAccount')?.value;
+            const stage = document.getElementById('expStage')?.value;
+            return !!(product && account && stage);
+        } else if (stepId === 'config') {
+            const variable = document.querySelector('input[name="expVariable"]:checked')?.value;
+            const variableType = document.querySelector('input[name="expVariableType"]:checked')?.value;
+            const start = document.getElementById('expStart')?.value;
+            const end = document.getElementById('expEnd')?.value;
+            return !!(variable && variableType && start && end);
+        } else if (stepId.startsWith('group')) {
+            const groupIndex = parseInt(stepId.replace('group', '')) - 1;
+            const groupCards = document.querySelectorAll('#groupList .group-card');
+            if (groupCards[groupIndex]) {
+                const name = groupCards[groupIndex].querySelector('.group-name')?.value.trim();
+                const object = groupCards[groupIndex].querySelector('.group-object')?.value;
+                const benchmark = groupCards[groupIndex].querySelector('.group-benchmark')?.value;
+                return !!(name && object && benchmark);
+            }
+            return false;
+        }
+        return false;
+    }
+
+    function updateStepStatus(stepId, isActive, isCompleted) {
+        const stepItem = document.querySelector(`[data-step="${stepId}"]`);
+        if (!stepItem) return;
+        
+        const stepTitle = stepItem.querySelector('.step-title');
+        if (!stepTitle) return;
+        
+        // 移除现有的对号图标
+        const existingCheck = stepTitle.querySelector('.step-check-icon');
+        if (existingCheck) {
+            existingCheck.remove();
+        }
+        
+        stepItem.classList.remove('active', 'completed', 'pending');
+        // 如果已完成，优先显示完成状态（绿色+对号）
+        if (isCompleted) {
+            stepItem.classList.add('completed');
+            // 添加对号图标
+            const checkIcon = document.createElement('i');
+            checkIcon.className = 'bi bi-check-circle-fill step-check-icon';
+            stepTitle.appendChild(checkIcon);
+        } else if (isActive) {
+            stepItem.classList.add('active');
+                                    } else {
+            stepItem.classList.add('pending');
+        }
+    }
+
+    function updateAllStepStatuses() {
+        const formContentArea = document.querySelector('.form-content-area');
+        if (!formContentArea) return;
+        
+        const scrollTop = formContentArea.scrollTop;
+        const viewportHeight = formContentArea.clientHeight;
+        const viewportCenter = scrollTop + viewportHeight / 2;
+        
+        const steps = [
+            { id: 'basic', element: document.querySelector('.section-box:first-of-type') },
+            { id: 'config', element: document.querySelectorAll('.section-box')[1] }
+        ];
+        
+        const groupCards = document.querySelectorAll('#groupList .group-card');
+        groupCards.forEach((card, idx) => {
+            steps.push({ id: `group${idx + 1}`, element: card });
+        });
+        
+        let activeStepId = null;
+        let minDistance = Infinity;
+        
+        steps.forEach(step => {
+            if (!step.element) return;
+            const rect = step.element.getBoundingClientRect();
+            const formRect = formContentArea.getBoundingClientRect();
+            const elementTop = rect.top - formRect.top + scrollTop;
+            const elementBottom = elementTop + rect.height;
+            const elementCenter = elementTop + rect.height / 2;
+            
+            const distance = Math.abs(elementCenter - viewportCenter);
+            if (elementTop <= viewportCenter && elementBottom >= viewportCenter && distance < minDistance) {
+                minDistance = distance;
+                activeStepId = step.id;
+            }
+        });
+        
+        if (!activeStepId && steps.length > 0) {
+            const firstVisible = steps.find(step => {
+                if (!step.element) return false;
+                const rect = step.element.getBoundingClientRect();
+                const formRect = formContentArea.getBoundingClientRect();
+                return rect.top < formRect.bottom && rect.bottom > formRect.top;
+            });
+            if (firstVisible) {
+                activeStepId = firstVisible.id;
+                                    } else {
+                activeStepId = steps[0].id;
+            }
+        }
+        
+        steps.forEach(step => {
+            const isActive = step.id === activeStepId;
+            const isCompleted = checkStepCompletion(step.id);
+            // 如果已完成，优先显示完成状态（绿色+对号），否则显示激活状态（蓝色）或待完成状态（灰色）
+            updateStepStatus(step.id, isActive && !isCompleted, isCompleted);
+        });
+    }
+
+    let scrollTimeout;
+    function setupScrollListener() {
+        const formContentArea = document.querySelector('.form-content-area');
+        if (!formContentArea) return;
+        
+        formContentArea.removeEventListener('scroll', handleScroll);
+        formContentArea.addEventListener('scroll', handleScroll);
+        
+        const formInputs = formContentArea.querySelectorAll('input, select, textarea');
+        formInputs.forEach(input => {
+            input.removeEventListener('change', handleFormChange);
+            input.removeEventListener('input', handleFormChange);
+            input.addEventListener('change', handleFormChange);
+            input.addEventListener('input', handleFormChange);
+        });
+    }
+
+    function handleScroll() {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            updateAllStepStatuses();
+        }, 100);
+    }
+
+    function handleFormChange() {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            updateAllStepStatuses();
+        }, 300);
+    }
+
+    function updateActiveStep(activeStepId) {
+        updateAllStepStatuses();
+    }
+
+    // 使用事件委托绑定步骤点击
+    function initStepSidebarEvents() {
+        const stepSidebar = document.getElementById('stepSidebar');
+        if (stepSidebar) {
+            stepSidebar.addEventListener('click', (e) => {
+                const stepItem = e.target.closest('.step-item');
+                if (stepItem) {
+                    const stepId = stepItem.getAttribute('data-step');
+                    if (stepId) {
+                        scrollToStep(stepId);
+                    }
+                }
+            });
+        }
+    }
+
+    function renderGroups(groups) {
+        const list = document.getElementById('groupList');
+        const data = groups && groups.length ? groups : [{ name: '', object: '', benchmark: '' }];
+        list.innerHTML = '';
+        data.forEach((g, idx) => {
+            const card = document.createElement('div');
+            card.className = 'group-card';
+            const deleteBtn = idx === 0 ? '' : `<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteGroup(${idx})">删除</button>`;
+            card.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="fw-semibold">实验 ${idx + 1}</div>
+                    ${deleteBtn}
+                </div>
+                <div class="mb-2">
+                    <label class="form-label required">实验名称</label>
+                    <input type="text" class="form-control group-name" placeholder="实验名称" value="${g.name || ''}" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label required">实验标杆</label>
+                    <select class="form-select group-benchmark" required>
+                        <option value="" disabled ${!g.benchmark ? 'selected' : ''}>请选择实验标杆</option>
+                        <option value="benchmark1" ${g.benchmark === 'benchmark1' ? 'selected' : ''}>标杆 1</option>
+                        <option value="benchmark2" ${g.benchmark === 'benchmark2' ? 'selected' : ''}>标杆 2</option>
+                        <option value="benchmark3" ${g.benchmark === 'benchmark3' ? 'selected' : ''}>标杆 3</option>
+                        <option value="benchmark4" ${g.benchmark === 'benchmark4' ? 'selected' : ''}>标杆 4</option>
+                        <option value="benchmark5" ${g.benchmark === 'benchmark5' ? 'selected' : ''}>标杆 5</option>
+                        </select>
+                        </div>
+                <div>
+                    <label class="form-label required">实验对象</label>
+                    <select class="form-select group-object" required>
+                        <option value="" disabled ${!g.object ? 'selected' : ''}>请选择实验对象</option>
+                        <option value="adset1" ${g.object === 'adset1' ? 'selected' : ''}>Adset 1</option>
+                        <option value="adset2" ${g.object === 'adset2' ? 'selected' : ''}>Adset 2</option>
+                        <option value="adset3" ${g.object === 'adset3' ? 'selected' : ''}>Adset 3</option>
+                        <option value="adset4" ${g.object === 'adset4' ? 'selected' : ''}>Adset 4</option>
+                        <option value="adset5" ${g.object === 'adset5' ? 'selected' : ''}>Adset 5</option>
+                        </select>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+        renderStepSidebar(data.length);
+    }
+
+    function collectGroups() {
+        const cards = Array.from(document.querySelectorAll('#groupList .group-card'));
+        return cards.map(card => ({
+            name: card.querySelector('.group-name').value.trim(),
+            object: card.querySelector('.group-object').value,
+            benchmark: card.querySelector('.group-benchmark').value
+        }));
+    }
+
+    function initGroups() {
+        renderGroups([{ name: '', object: '', benchmark: '' }]);
+    }
+
+    function deleteGroup(idx) {
+        const current = collectGroups();
+        if (idx <= 0) return;
+        current.splice(idx, 1);
+        renderGroups(current.length ? current : [{ name: '', object: '', benchmark: '' }]);
+    }
+
+    document.getElementById('btnAddGroup').addEventListener('click', () => {
+        const current = collectGroups();
+        const last = current[current.length - 1] || { name: '', object: '', benchmark: '' };
+        const nextName = last.name ? `${last.name}-副本` : '';
+        renderGroups([...current, { name: nextName, object: last.object, benchmark: last.benchmark }]);
+    });
+
+    formEl.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!formEl.checkValidity()) {
+            formEl.classList.add('was-validated');
+            return;
+        }
+        const id = document.getElementById('experimentId').value || crypto.randomUUID();
+        const existingExp = experiments.find(i => i.id === id);
+        const payload = {
+            id,
+            enabled: true,
+            name: (existingExp || {}).name || '未命名实验',
+            owner: (existingExp || {}).owner || '未指定',
+            product: document.getElementById('expProduct').value,
+            accountId: document.getElementById('expAccount').value,
+            accountName: document.querySelector('#expAccount option:checked')?.textContent.replace(/（.*?）/, '') || '',
+            stage: document.getElementById('expStage').value,
+            status: (existingExp || {}).status || 'running',
+            start: document.getElementById('expStart').value,
+            end: document.getElementById('expEnd').value,
+            createdAt: existingExp ? existingExp.createdAt : getCurrentDateTime(),
+            updatedAt: getCurrentDateTime(),
+            trafficB: Number(50),
+            variables: ['素材'],
+            variableType: document.querySelector('input[name="expVariableType"]:checked')?.value || '视频',
+            metrics: Array.from(document.getElementById('expMetrics').selectedOptions).map(o => o.value),
+            desc: document.getElementById('expDesc').value.trim(),
+            groups: collectGroups()
+        };
+        const index = experiments.findIndex(i => i.id === id);
+        if (index >= 0) experiments[index] = payload; else experiments.push(payload);
+        offcanvas.hide();
+        resetForm();
+        populateFilterOptions();
+        renderTable();
+    });
+
+    offcanvasEl.addEventListener('hidden.bs.offcanvas', resetForm);
+    offcanvasEl.addEventListener('shown.bs.offcanvas', () => {
+        setTimeout(() => {
+            setupScrollListener();
+            updateAllStepStatuses();
+        }, 100);
+    });
+    applyBtn.addEventListener('click', () => {
+        currentPage = 1;
+        renderTable();
+    });
+    resetBtn.addEventListener('click', () => {
+        filterName.value = 'all';
+        filterOwner.value = 'all';
+        filterProduct.value = 'all';
+        renderAccountFilterOptions('all');
+        filterAccount.value = 'all';
+        filterStatus.value = 'all';
+        filterStart.value = '';
+        filterEnd.value = '';
+        currentPage = 1;
+        renderTable();
+    });
+    filterProduct.addEventListener('change', () => {
+        renderAccountFilterOptions(filterProduct.value);
+    });
+
+    document.getElementById('expProduct').addEventListener('change', (e) => {
+        renderFormAccountOptions(e.target.value);
+    });
+    
+    // 报告导出按钮（占位，不实现功能）
+    const exportReportBtn = document.getElementById('btn-export-report');
+    if (exportReportBtn) {
+        exportReportBtn.addEventListener('click', () => {
+            // 导出功能待实现
+            console.log('导出报告功能待实现');
+        });
+    }
+    
+    // 分页控制事件
+    document.getElementById('prevPageBtn').addEventListener('click', () => {
+        if (currentPage > 1) goToPage(currentPage - 1);
+    });
+    
+    document.getElementById('nextPageBtn').addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredData.length / pageSize);
+        if (currentPage < totalPages) goToPage(currentPage + 1);
+    });
+    
+    document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
+        changePageSize(e.target.value);
+    });
+    
+    document.getElementById('gotoPageInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const page = parseInt(e.target.value);
+            if (!isNaN(page)) {
+                goToPage(page);
+            }
+        }
+    });
+    
+    document.getElementById('gotoPageInput').addEventListener('blur', (e) => {
+        const page = parseInt(e.target.value);
+        if (!isNaN(page)) {
+            goToPage(page);
+        }
+    });
+
+    populateFormProductOptions();
+    populateFilterOptions();
+    setDateDefaults();
+    
+    // 日期范围验证：当开始日期改变时，更新结束日期的最小值
+    document.getElementById('expStart').addEventListener('change', function() {
+        const endEl = document.getElementById('expEnd');
+        if (this.value) {
+            endEl.min = this.value;
+            if (endEl.value && endEl.value < this.value) {
+                endEl.value = this.value;
+            }
+        }
+    });
+    
+    // 日期范围验证：当结束日期改变时，确保不小于开始日期
+    document.getElementById('expEnd').addEventListener('change', function() {
+        const startEl = document.getElementById('expStart');
+        if (startEl.value && this.value < startEl.value) {
+            this.setCustomValidity('结束日期不能早于开始日期');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    initGroups();
+    initStepSidebarEvents();
+    renderTable();
+    </script>
+</body>
+</html>
+
+

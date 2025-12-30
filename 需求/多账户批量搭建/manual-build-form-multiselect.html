@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>手动搭建 - 多选Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <style>
+    :root { color-scheme: light; }
+    body { background:#fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+    .page-wrap { max-width: 1280px; margin: 24px auto; padding: 0 24px; }
+    .header { display:flex; align-items:center; justify-content:space-between; padding: 10px 0 14px; }
+    .title { font-size: 16px; font-weight: 600; color:#303133; }
+    .close-like { border:0; background:transparent; font-size: 18px; line-height: 1; color: #909399; cursor:pointer; }
+    .divider { height:1px; background:#ebeef5; margin: 10px 0 18px; }
+    .section-title { font-size: 14px; font-weight: 600; color:#303133; margin: 10px 0 8px; }
+
+    /* 截图风格：左标签右控件 */
+    .form-row { display:flex; align-items:flex-start; gap: 22px; padding: 10px 0; }
+    .label-col { width: 110px; flex: 0 0 110px; color: #606266; font-size: 14px; padding-top: 8px; }
+    .ctrl-col { flex: 1; min-width: 0; }
+    .form-label.required::before { content: '*'; color: #f56c6c; margin-right: 4px; }
+
+    .select-shell { width: 520px; max-width: 100%; }
+    .select-btn {
+      width: 100%;
+      min-height: 36px;
+      padding: 6px 34px 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #dcdfe6;
+      background: #fff;
+      color: #303133;
+      font-size: 14px;
+      text-align: left;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      position: relative;
+    }
+    .select-btn:focus { outline: none; border-color:#1677ff; box-shadow: 0 0 0 .15rem rgba(22, 119, 255, 0.12); }
+    .select-btn::after {
+      content: '';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      border-right: 1.5px solid #909399;
+      border-bottom: 1.5px solid #909399;
+      transform: translateY(-60%) rotate(45deg);
+      pointer-events: none;
+    }
+    .placeholder { color:#c0c4cc; }
+    .select-btn.is-empty { color:#c0c4cc; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0f2f5;
+      color: #606266;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 12px;
+      line-height: 18px;
+    }
+    .tag button {
+      border:0;
+      background:transparent;
+      color:#909399;
+      cursor:pointer;
+      padding:0;
+      line-height: 1;
+      font-size: 14px;
+    }
+
+    .dropdown-menu.select-menu { width: 520px; max-width: 100%; border-radius: 8px; border-color: #e5e7eb; box-shadow: 0 10px 28px rgba(0,0,0,.08); }
+    .opt { display:flex; align-items:center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+    .opt:hover { background:#f5f7fa; }
+    .opt span { color:#303133; font-size: 14px; }
+    .opt .ck { margin-left: auto; color:#1677ff; font-weight: 700; font-size: 14px; visibility: hidden; }
+    .opt.selected { background: #ecf5ff; }
+    .opt.selected .ck { visibility: visible; }
+
+    .hint-red { color:#f56c6c; font-size: 12px; margin-top: 8px; }
+    .error { color:#f56c6c; font-size: 12px; margin-top: 6px; display:none; }
+    .error.show { display:block; }
+
+    .table-shell { margin-top: 18px; width: 720px; max-width: 100%; border: 1px solid #ebeef5; border-radius: 10px; overflow: hidden; }
+    .table thead th { font-size: 13px; color:#909399; font-weight: 600; }
+    .table td { vertical-align: middle; font-size: 13px; }
+    .muted { color:#909399; }
+
+    /* 底部规则表：不折行，超出则横向滚动 */
+    #ruleTableShell { width: 980px; max-width: 100%; overflow-x: auto; overflow-y: hidden; }
+    #ruleTableShell table { min-width: 980px; }
+    #ruleTableShell th, #ruleTableShell td { white-space: nowrap; }
+    #ruleTableShell .select-btn { white-space: nowrap; flex-wrap: nowrap; }
+    /* 表格内“应用账户”下拉浮层（挂载到 body，避免被表格滚动容器裁剪） */
+    .account-menu {
+      position: fixed;
+      z-index: 2000;
+      display: none;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.08);
+      padding: 8px;
+      max-height: 280px;
+      overflow: auto;
+    }
+    .account-menu.show { display: block; }
+    .account-menu .opt { user-select: none; }
+
+    /* 投放媒体（单选） */
+    .radio-row { display:flex; align-items:center; gap: 18px; flex-wrap: wrap; padding-top: 6px; }
+    .radio { display:inline-flex; align-items:center; gap: 8px; color:#606266; font-size: 14px; }
+    .radio input { width: 14px; height: 14px; accent-color:#1677ff; }
+    .radio input:checked + span { color:#1677ff; font-weight: 600; }
+
+    /* 搭建素材表 */
+    .material-shell { width: 100%; border-radius: 10px; overflow:hidden; }
+    .material-shell .table-shell { width: 100%; margin-top: 8px; }
+    .table-compact td, .table-compact th { padding: 10px 12px; }
+    .th-help { display:inline-flex; align-items:center; gap: 6px; }
+    .qmark { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #dcdfe6; color:#909399; display:inline-flex; align-items:center; justify-content:center; font-size: 11px; }
+
+    .footer { display:flex; justify-content:flex-end; gap: 12px; padding: 16px 0 0; }
+    .btn-primary { background:#1677ff; border-color:#1677ff; }
+    .btn-outline-secondary { color:#606266; border-color:#dcdfe6; }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="header">
+    <div class="title">手动搭建</div>
+    <button class="close-like" type="button" id="btnClose" aria-label="Close">×</button>
+  </div>
+  <div class="divider"></div>
+
+  <!-- 投放媒体 -->
+  <div class="form-row" style="padding-top:0;">
+    <div class="label-col">投放媒体</div>
+    <div class="ctrl-col">
+      <div class="radio-row" id="mediaRadios"></div>
+    </div>
+  </div>
+
+  <!-- 搭建素材 -->
+  <div class="form-row">
+    <div class="label-col">搭建素材</div>
+    <div class="ctrl-col">
+      <div class="material-shell">
+        <div class="table-shell">
+          <table class="table mb-0 table-compact">
+            <thead>
+              <tr>
+                <th style="width: 50%;">素材关联App</th>
+                <th style="width: 25%;">已选素材数</th>
+                <th>
+                  <span class="th-help">已选可搭建素材数 <span class="qmark" title="demo">?</span></span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="materialTableBody"></tbody>
+          </table>
+        </div>
+        <div class="hint-red" id="materialHint">说明：仅素材关联产品与搭建规则的产品相同的素材可进行搭建</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section-title">匹配规则</div>
+
+  <form id="demoForm" novalidate>
+    <!-- 产品名称（多选） -->
+    <div class="form-row">
+      <div class="label-col form-label required">产品名称</div>
+      <div class="ctrl-col">
+        <div class="dropdown select-shell">
+          <button class="select-btn" type="button" id="productBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"></button>
+          <ul class="dropdown-menu select-menu p-2" aria-labelledby="productBtn" id="productMenu"></ul>
+        </div>
+        <div class="error" id="productErr">请选择产品名称</div>
+      </div>
+    </div>
+
+    <!-- 搭建规则（多选） -->
+    <div class="form-row">
+      <div class="label-col form-label required">搭建规则</div>
+      <div class="ctrl-col">
+        <div class="dropdown select-shell">
+          <button class="select-btn" type="button" id="ruleBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"></button>
+          <ul class="dropdown-menu select-menu p-2" aria-labelledby="ruleBtn" id="ruleMenu"></ul>
+        </div>
+        <div class="error" id="ruleErr">请选择搭建规则</div>
+      </div>
+    </div>
+
+    <!-- 列表：搭建规则至少选一个时才显示；每选一个规则加一行 -->
+    <div class="table-shell" id="ruleTableShell" style="display:none;">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th style="width: 22%;">产品名称</th>
+            <th style="width: 48%;">规则名称</th>
+            <th>应用账户</th>
+          </tr>
+        </thead>
+        <tbody id="ruleTableBody">
+          <tr><td colspan="3" class="muted" style="padding: 14px;">请选择搭建规则</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <button class="btn btn-outline-secondary" type="button" id="btnCancel">取消</button>
+      <button class="btn btn-primary" type="button" id="btnConfirm">确定</button>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+  // 产品名称：选项为“素材关联App”
+  const PRODUCT_OPTIONS = [
+    { id: 'wsfnnf2025', label: 'wsfnnf2025' },
+    { id: 'ifnnf2021', label: 'ifnnf2021' },
+    { id: 'ieaae2024', label: 'ieaae2024' }
+  ];
+
+  // 投放媒体（截图风格：单选）
+  const MEDIA_OPTIONS = [
+    { id: 'facebook', label: 'Facebook' },
+    { id: 'tiktok', label: 'Tiktok' },
+    { id: 'applovin', label: 'AppLovin' },
+    { id: 'adwords', label: 'Adwords' },
+    { id: 'unity', label: 'Unity' }
+  ];
+
+  // 搭建素材（demo 数据）
+  const MATERIAL_ROWS = [
+    { app: 'ieaae2024', selectedCount: 6, buildableCount: 6 },
+    { app: 'fnnf2022', selectedCount: 9, buildableCount: 9 },
+    { app: 'ifnnf2021', selectedCount: 9, buildableCount: 9 },
+    { app: 'wsfnnf2025', selectedCount: 9, buildableCount: 9 }
+  ];
+
+  // 搭建规则：示例 2 个（可多选）
+  const RULE_OPTIONS = [
+    { id: 'r1', label: 'web2sale_wall_pilates_VO_T1_起量_112515', accountId: '799951806198451' },
+    { id: 'r2', label: 'web2sale_wall_pilates_VO_T1_起量_111430_ios', accountId: '1177848267778562' }
+  ];
+
+  // 应用账户（demo）
+  const ACCOUNTS_FOR_RULE2 = [
+    { id: '128473675', name: 'account1' },
+    { id: '392847561', name: 'account2' },
+    { id: '900176234', name: 'account3' }
+  ];
+
+  const state = {
+    products: new Set(),
+    rules: new Set(),
+    rule2Accounts: new Set()
+  };
+
+  const productBtn = document.getElementById('productBtn');
+  const productMenu = document.getElementById('productMenu');
+  const ruleBtn = document.getElementById('ruleBtn');
+  const ruleMenu = document.getElementById('ruleMenu');
+  const tableBody = document.getElementById('ruleTableBody');
+  const ruleTableShell = document.getElementById('ruleTableShell');
+  const productErr = document.getElementById('productErr');
+  const ruleErr = document.getElementById('ruleErr');
+  const mediaRadiosEl = document.getElementById('mediaRadios');
+  const materialTableBodyEl = document.getElementById('materialTableBody');
+
+  function renderMedia() {
+    mediaRadiosEl.innerHTML = '';
+    MEDIA_OPTIONS.forEach((m, idx) => {
+      const label = document.createElement('label');
+      label.className = 'radio';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'media';
+      input.value = m.id;
+      if (idx === 0) input.checked = true; // 默认 Facebook
+      const span = document.createElement('span');
+      span.textContent = m.label;
+      label.appendChild(input);
+      label.appendChild(span);
+      mediaRadiosEl.appendChild(label);
+    });
+  }
+
+  function renderMaterials() {
+    materialTableBodyEl.innerHTML = '';
+    MATERIAL_ROWS.forEach(row => {
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td');
+      td1.textContent = row.app;
+      const td2 = document.createElement('td');
+      td2.textContent = String(row.selectedCount);
+      const td3 = document.createElement('td');
+      td3.textContent = String(row.buildableCount);
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      tr.appendChild(td3);
+      materialTableBodyEl.appendChild(tr);
+    });
+  }
+
+  function renderSelectButton(btnEl, selectedIds, options, placeholder) {
+    btnEl.innerHTML = '';
+    const selected = options.filter(o => selectedIds.has(o.id));
+    if (selected.length === 0) {
+      btnEl.classList.add('is-empty');
+      btnEl.textContent = placeholder;
+      return;
+    }
+    btnEl.classList.remove('is-empty');
+    selected.forEach(o => {
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      const text = document.createElement('span');
+      text.textContent = o.label;
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.textContent = '×';
+      x.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectedIds.delete(o.id);
+        syncAll();
+      });
+      tag.appendChild(text);
+      tag.appendChild(x);
+      btnEl.appendChild(tag);
+    });
+  }
+
+  function renderMenu(menuEl, selectedIds, options, onToggle) {
+    menuEl.innerHTML = '';
+    options.forEach(o => {
+      const li = document.createElement('li');
+      const label = document.createElement('div');
+      label.className = 'opt w-100' + (selectedIds.has(o.id) ? ' selected' : '');
+      label.setAttribute('role', 'option');
+      label.setAttribute('aria-selected', selectedIds.has(o.id) ? 'true' : 'false');
+      label.addEventListener('click', () => {
+        const next = !selectedIds.has(o.id);
+        onToggle(o.id, next);
+      });
+      const span = document.createElement('span');
+      span.textContent = o.label;
+      const ck = document.createElement('span');
+      ck.className = 'ck';
+      ck.textContent = '✓';
+      label.appendChild(span);
+      label.appendChild(ck);
+      li.appendChild(label);
+      menuEl.appendChild(li);
+    });
+  }
+
+  function renderRuleTable() {
+    const selectedRules = RULE_OPTIONS.filter(r => state.rules.has(r.id));
+    if (selectedRules.length === 0) {
+      ruleTableShell.style.display = 'none';
+      tableBody.innerHTML = '<tr><td colspan="3" class="muted" style="padding: 14px;">请选择搭建规则</td></tr>';
+      return;
+    }
+    ruleTableShell.style.display = '';
+    tableBody.innerHTML = '';
+
+    const anyProduct = (() => {
+      const first = state.products.values().next().value;
+      if (!first) return '-';
+      const opt = PRODUCT_OPTIONS.find(p => p.id === first);
+      return opt?.label || first;
+    })();
+
+    // 仅允许一个浮层打开
+    window.__openAccountMenu?.remove?.();
+    window.__openAccountMenu = null;
+
+    function buildAccountMultiSelect(onChange) {
+      const wrap = document.createElement('div');
+      wrap.style.display = 'inline-block';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'select-btn';
+      btn.style.width = '420px';
+
+      const menu = document.createElement('div');
+      menu.className = 'account-menu';
+      menu.setAttribute('role', 'listbox');
+
+      ACCOUNTS_FOR_RULE2.forEach(acc => {
+        const row = document.createElement('div');
+        row.className = 'opt w-100' + (state.rule2Accounts.has(acc.id) ? ' selected' : '');
+        row.setAttribute('role', 'option');
+        row.setAttribute('aria-selected', state.rule2Accounts.has(acc.id) ? 'true' : 'false');
+        const span = document.createElement('span');
+        span.textContent = `${acc.name}(${acc.id})`;
+        const ck = document.createElement('span');
+        ck.className = 'ck';
+        ck.textContent = '✓';
+        row.appendChild(span);
+        row.appendChild(ck);
+        menu.appendChild(row);
+
+        row.addEventListener('click', () => {
+          if (state.rule2Accounts.has(acc.id)) state.rule2Accounts.delete(acc.id);
+          else state.rule2Accounts.add(acc.id);
+          // 立即刷新行样式
+          row.classList.toggle('selected', state.rule2Accounts.has(acc.id));
+          row.setAttribute('aria-selected', state.rule2Accounts.has(acc.id) ? 'true' : 'false');
+          syncBtn();
+          onChange?.();
+        });
+      });
+
+      function syncBtn() {
+        const selected = ACCOUNTS_FOR_RULE2.filter(a => state.rule2Accounts.has(a.id));
+        if (selected.length === 0) {
+          btn.classList.add('is-empty');
+          btn.textContent = '请选择应用账户';
+        } else {
+          btn.classList.remove('is-empty');
+          btn.textContent = selected.map(a => `${a.name}(${a.id})`).join('，');
+        }
+      }
+
+      function positionMenu() {
+        const rect = btn.getBoundingClientRect();
+        const top = rect.bottom + 6;
+        let left = rect.left;
+        const width = rect.width;
+        const maxLeft = Math.max(8, window.innerWidth - width - 8);
+        left = Math.min(Math.max(8, left), maxLeft);
+        menu.style.top = `${Math.min(top, window.innerHeight - 16)}px`;
+        menu.style.left = `${left}px`;
+        menu.style.width = `${width}px`;
+      }
+
+      function closeMenu() {
+        menu.classList.remove('show');
+        window.__openAccountMenu = null;
+      }
+
+      function openMenu() {
+        if (window.__openAccountMenu && window.__openAccountMenu !== menu) {
+          window.__openAccountMenu.classList.remove('show');
+        }
+        positionMenu();
+        menu.classList.add('show');
+        window.__openAccountMenu = menu;
+      }
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        menu.classList.contains('show') ? closeMenu() : openMenu();
+      });
+
+      menu.addEventListener('click', (e) => e.stopPropagation());
+
+      // 全局关闭
+      if (!window.__accountMenuGlobalBound) {
+        window.__accountMenuGlobalBound = true;
+        document.addEventListener('click', () => {
+          if (window.__openAccountMenu) window.__openAccountMenu.classList.remove('show');
+          window.__openAccountMenu = null;
+        });
+        window.addEventListener('resize', () => {
+          if (window.__openAccountMenu) {
+            // 尝试重新定位：只处理当前页唯一按钮场景即可
+            // 菜单会在下次点击时重新定位
+          }
+        });
+      }
+
+      syncBtn();
+      document.body.appendChild(menu);
+      // 渲染销毁钩子
+      menu.remove = (function(origRemove){
+        return function() {
+          try { origRemove.call(menu); } catch (_) {}
+        };
+      })(menu.remove);
+
+      wrap.appendChild(btn);
+      return wrap;
+    }
+
+    selectedRules.forEach(r => {
+      const tr = document.createElement('tr');
+      const td0 = document.createElement('td');
+      td0.textContent = anyProduct;
+      const td1 = document.createElement('td');
+      td1.textContent = r.label;
+      const td2 = document.createElement('td');
+      if (r.id === 'r1') {
+        td2.textContent = 'account1(128473675)';
+      } else if (r.id === 'r2') {
+        td2.appendChild(buildAccountMultiSelect(() => {}));
+      } else {
+        td2.textContent = '-';
+      }
+      tr.appendChild(td0);
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      tableBody.appendChild(tr);
+    });
+  }
+
+  function validate() {
+    const okProduct = state.products.size > 0;
+    const okRule = state.rules.size > 0;
+    productErr.classList.toggle('show', !okProduct);
+    ruleErr.classList.toggle('show', !okRule);
+    return okProduct && okRule;
+  }
+
+  function syncAll() {
+    renderSelectButton(productBtn, state.products, PRODUCT_OPTIONS, '请选择产品名称');
+    renderSelectButton(ruleBtn, state.rules, RULE_OPTIONS, '请选择搭建规则');
+    renderMenu(productMenu, state.products, PRODUCT_OPTIONS, (id, checked) => {
+      checked ? state.products.add(id) : state.products.delete(id);
+      syncAll();
+    });
+    renderMenu(ruleMenu, state.rules, RULE_OPTIONS, (id, checked) => {
+      checked ? state.rules.add(id) : state.rules.delete(id);
+      if (!state.rules.has('r2')) state.rule2Accounts.clear();
+      syncAll();
+    });
+    renderRuleTable();
+  }
+
+  document.getElementById('btnCancel').addEventListener('click', () => {
+    state.products.clear();
+    state.rules.clear();
+    productErr.classList.remove('show');
+    ruleErr.classList.remove('show');
+    syncAll();
+  });
+
+  document.getElementById('btnConfirm').addEventListener('click', () => {
+    validate();
+  });
+
+  document.getElementById('btnClose').addEventListener('click', () => {
+    window.history.length > 1 ? window.history.back() : (window.location.href = '../../index.html');
+  });
+
+  renderMedia();
+  renderMaterials();
+  syncAll();
+</script>
+</body>
+</html>
+
+

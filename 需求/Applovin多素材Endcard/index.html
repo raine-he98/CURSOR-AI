@@ -1,0 +1,2096 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>手动搭建</title>
+    <style>
+      :root {
+        --bg: #f5f6f8;
+        --panel: #ffffff;
+        --text: #1f2329;
+        --muted: #6b7280;
+        --line: #e6e8ee;
+        --line-2: #dfe3ea;
+        --primary: #1677ff;
+        --danger: #ff4d4f;
+        --shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        --radius: 6px;
+        --radius-sm: 4px;
+        --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        color: var(--text);
+        background: var(--bg);
+      }
+      .overlay {
+        position: static;
+        min-height: 100vh;
+        background: transparent;
+        display: block;
+        padding: 0;
+      }
+      .modal {
+        width: 100%;
+        min-height: 100vh;
+        background: var(--panel);
+        border-radius: 0;
+        box-shadow: none;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--line);
+      }
+      .modal-title {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+      }
+      .close {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: #8b95a7;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        line-height: 1;
+      }
+      .close:hover {
+        background: #f3f5f9;
+        border-color: #eef1f6;
+        color: #4b5563;
+      }
+      .modal-body {
+        padding: 18px 22px 0 22px;
+        flex: 1;
+        overflow: visible;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 14px;
+        align-items: start;
+        margin-bottom: 16px;
+      }
+      .row.row-center {
+        align-items: center;
+      }
+      .row.row-center .label {
+        padding-top: 0;
+      }
+      .row.row-compact {
+        grid-template-columns: max-content 1fr;
+        gap: 8px;
+      }
+      .label {
+        color: var(--muted);
+        font-size: 13px;
+        padding-top: 6px;
+      }
+      .radio-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        align-items: center;
+      }
+      .radio {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #374151;
+        font-size: 13px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .radio input {
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1.5px solid #c8ceda;
+        display: inline-block;
+        position: relative;
+        margin: 0;
+      }
+      .radio input:checked {
+        border-color: var(--primary);
+      }
+      .radio input:checked::after {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        border-radius: 50%;
+        background: var(--primary);
+      }
+      .radio span {
+        transform: translateY(0.5px);
+      }
+      .radio input:checked + span {
+        color: var(--primary);
+        font-weight: 600;
+      }
+      .top-info {
+        display: grid;
+        grid-template-columns: 1.2fr 0.6fr 0.8fr;
+        gap: 18px;
+        align-items: start;
+        padding: 10px 0 4px 0;
+      }
+      .info-col .info-title {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 10px;
+      }
+      .info-list {
+        display: grid;
+        gap: 12px;
+        font-size: 13px;
+        color: #374151;
+        padding-right: 10px;
+      }
+      .info-num {
+        display: grid;
+        gap: 12px;
+        font-size: 13px;
+        color: #374151;
+        text-align: left;
+      }
+      .tip {
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--danger);
+      }
+      .divider {
+        height: 1px;
+        background: var(--line);
+        margin: 18px 0 14px 0;
+      }
+      .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 4px 0 10px 0;
+      }
+      .table-wrap {
+        border: 1px solid var(--line-2);
+        border-radius: var(--radius);
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 13px;
+      }
+      .confirm-table {
+        table-layout: fixed;
+      }
+      .confirm-table th,
+      .confirm-table td {
+        white-space: normal;
+        word-break: break-word;
+      }
+      .confirm-table tbody td {
+        height: auto; /* 覆盖全局 52px 固定行高，避免内容被裁切 */
+        vertical-align: top;
+      }
+      .confirm-table td.material-td,
+      .confirm-table td.endcard-td {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .confirm-table td.cpp-td {
+        position: relative;
+        padding-left: 0;
+        padding-right: 0;
+        padding-bottom: 38px; /* 右下角按钮留空间 */
+      }
+      .cell-inner {
+        padding: 0 10px;
+      }
+      .confirm-table .tag {
+        max-width: 320px;
+      }
+      .hscroll {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 6px; /* 给滚动条留点空间 */
+        scrollbar-gutter: stable both-edges;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+      }
+      .hscroll .tag {
+        flex: 0 0 auto;
+        width: max-content; /* 保持一行不折行，超出用横向滚动查看 */
+        max-width: none;
+        overflow: visible;
+        text-overflow: clip;
+      }
+      .material-td {
+        position: relative;
+      }
+      .material-td .hscroll {
+        padding-bottom: 24px; /* 预留给“共x条”角标，避免遮住内容 */
+      }
+      .endcard-td {
+        position: relative;
+      }
+      .confirm-table td.endcard-td {
+        padding-bottom: 38px; /* 给右下角“应用至全部”留空间 */
+      }
+      .cell-count,
+      .material-count {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        font-size: 12px;
+        color: #6b7280;
+        background: rgba(255, 255, 255, 0.92);
+        border-top-right-radius: 6px;
+        padding: 2px 8px;
+        line-height: 18px;
+        pointer-events: none; /* 不影响滚动/点击 */
+      }
+      .choose-btn {
+        height: 28px;
+        padding: 0 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid #d7dce6;
+        background: #fff;
+        color: #374151;
+        cursor: pointer;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .choose-btn:hover {
+        border-color: rgba(22, 119, 255, 0.45);
+        color: var(--primary);
+        background: rgba(22, 119, 255, 0.04);
+      }
+      .cs-cell {
+        min-width: 0;
+      }
+      .cs-text {
+        min-width: 0;
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        word-break: break-all;
+        display: block;
+        padding-right: 30px; /* 给右下角图标留空间，避免遮挡文本 */
+      }
+      .cs-input {
+        width: 100%;
+        height: 28px;
+        padding: 0 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid #d7dce6;
+        outline: none;
+        font-size: 12px;
+      }
+      .cs-input:focus {
+        border-color: rgba(22, 119, 255, 0.7);
+        box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.12);
+      }
+      .cs-td {
+        position: relative;
+      }
+      .cs-icon-btn {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border-radius: 6px;
+        border: 1px solid rgba(22, 119, 255, 0.35);
+        background: rgba(22, 119, 255, 0.06);
+        color: var(--primary);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .cs-icon-btn:hover {
+        border-color: rgba(22, 119, 255, 0.65);
+        background: rgba(22, 119, 255, 0.1);
+      }
+      .cs-icon-btn svg {
+        width: 14px;
+        height: 14px;
+        display: block;
+      }
+      .cpp-td {
+        position: relative;
+      }
+      .cpp-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+      .radio.radio-sm {
+        font-size: 12px;
+        gap: 6px;
+      }
+      .radio.radio-sm input {
+        width: 13px;
+        height: 13px;
+      }
+      .cpp-select-wrap {
+        margin-top: 6px;
+        display: none;
+      }
+      .cpp-select {
+        height: 30px;
+        font-size: 12px;
+        padding: 0 10px;
+      }
+      .endcard-dd {
+        position: relative;
+      }
+      .endcard-trigger {
+        width: 100%;
+        min-height: 34px;
+        padding: 6px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid #d7dce6;
+        background: #fff;
+        color: #374151;
+        cursor: pointer;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .endcard-trigger.is-placeholder {
+        color: #9aa3b2;
+      }
+      .endcard-trigger.is-error {
+        border-color: rgba(255, 77, 79, 0.65);
+        box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.12);
+      }
+      .endcard-trigger .caret {
+        margin-top: 6px;
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 6px solid #9aa3b2;
+        flex: 0 0 auto;
+      }
+      .endcard-values {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        min-width: 0;
+        flex: 1;
+      }
+      .endcard-placeholder {
+        color: #9aa3b2;
+        line-height: 20px;
+        padding: 2px 0;
+      }
+      .endcard-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 100%;
+        padding: 4px 10px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #f7f8fa;
+        color: #374151;
+        line-height: 20px;
+      }
+      .endcard-pill .pill-text {
+        max-width: 260px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .endcard-pill .pill-remove {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 0;
+        background: rgba(107, 114, 128, 0.12);
+        color: #6b7280;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        padding: 0;
+      }
+      .endcard-pill .pill-remove:hover {
+        background: rgba(107, 114, 128, 0.2);
+        color: #374151;
+      }
+      .endcard-panel {
+        position: absolute;
+        left: 0;
+        top: calc(100% + 6px);
+        width: min(420px, 36vw);
+        z-index: 20;
+        background: #fff;
+        border: 1px solid #e6e8ee;
+        border-radius: 10px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
+        padding: 10px;
+      }
+      .endcard-panel[hidden] {
+        display: none;
+      }
+      .endcard-all {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #374151;
+        padding: 6px 6px 10px 6px;
+        border-bottom: 1px solid #eef1f6;
+        margin-bottom: 8px;
+      }
+      .endcard-all input {
+        accent-color: var(--primary);
+      }
+      .endcard-list {
+        max-height: 240px;
+        overflow: auto;
+        padding-right: 6px;
+      }
+      .endcard-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 6px;
+        border-radius: 8px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .endcard-item:hover {
+        background: rgba(22, 119, 255, 0.04);
+      }
+      .endcard-item input {
+        margin-top: 2px;
+        accent-color: var(--primary);
+      }
+      .endcard-item .name {
+        font-size: 12px;
+        color: #374151;
+        word-break: break-all;
+      }
+      .endcard-error {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--danger);
+        display: none;
+      }
+      .cpp-apply-btn {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(22, 119, 255, 0.35);
+        background: rgba(22, 119, 255, 0.06);
+        color: var(--primary);
+        cursor: pointer;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .cpp-apply-btn:hover {
+        border-color: rgba(22, 119, 255, 0.65);
+        background: rgba(22, 119, 255, 0.1);
+      }
+      .endcard-apply-btn {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(22, 119, 255, 0.35);
+        background: rgba(22, 119, 255, 0.06);
+        color: var(--primary);
+        cursor: pointer;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .endcard-apply-btn:hover {
+        border-color: rgba(22, 119, 255, 0.65);
+        background: rgba(22, 119, 255, 0.1);
+      }
+      thead th {
+        background: #fafbfc;
+        color: #6b7280;
+        font-weight: 600;
+        padding: 10px 10px;
+        border-bottom: 1px solid var(--line-2);
+      }
+      tbody td {
+        padding: 10px 10px;
+        border-bottom: 1px solid #eef1f6;
+        color: #374151;
+        height: 52px;
+        vertical-align: middle;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      th,
+      td {
+        border-right: 1px solid #eef1f6;
+      }
+      th:last-child,
+      td:last-child {
+        border-right: 0;
+      }
+      .col-idx {
+        width: 70px;
+        text-align: center;
+      }
+      .col-op {
+        width: 90px;
+      }
+      .op-btn {
+        height: 28px;
+        padding: 0 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #6b7280;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .op-btn:hover {
+        border-color: #d1d5db;
+        color: #374151;
+        background: #fafbfc;
+      }
+      .op-btn-danger {
+        border-color: rgba(255, 77, 79, 0.35);
+        color: var(--danger);
+        background: #fff;
+      }
+      .op-btn-danger:hover {
+        border-color: rgba(255, 77, 79, 0.6);
+        background: rgba(255, 77, 79, 0.04);
+      }
+      .select {
+        width: 100%;
+        height: 34px;
+        padding: 0 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid #d7dce6;
+        background: #fff;
+        color: #374151;
+        outline: none;
+      }
+      .select:focus {
+        border-color: rgba(22, 119, 255, 0.7);
+        box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.12);
+      }
+      .input {
+        width: 160px;
+        height: 34px;
+        padding: 0 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid #d7dce6;
+        background: #fff;
+        color: #374151;
+        outline: none;
+      }
+      .input:focus {
+        border-color: rgba(22, 119, 255, 0.7);
+        box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.12);
+      }
+      .error-text {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--danger);
+        display: none;
+      }
+      .input.is-error {
+        border-color: rgba(255, 77, 79, 0.65);
+        box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.12);
+      }
+      .add-rule {
+        text-align: center;
+        padding: 12px 0 14px 0;
+        color: #4b5563;
+        font-size: 13px;
+      }
+      .add-rule a {
+        color: #4b5563;
+        text-decoration: none;
+      }
+      .add-rule a:hover {
+        color: var(--primary);
+      }
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-width: 0;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        height: 22px;
+        padding: 0 8px;
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+        background: #fafbfc;
+        color: #4b5563;
+        font-size: 12px;
+        line-height: 1;
+        white-space: nowrap;
+        max-width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: default;
+        position: relative;
+      }
+      .tag:hover {
+        background: rgba(22, 119, 255, 0.06);
+        border-color: rgba(22, 119, 255, 0.35);
+        color: #1d4ed8;
+        cursor: pointer;
+      }
+      .tag[data-tooltip]:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 0;
+        top: calc(100% + 8px);
+        z-index: 30;
+        max-width: min(760px, 70vw);
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        background: rgba(17, 24, 39, 0.92);
+        color: #fff;
+        font-size: 12px;
+        line-height: 1.4;
+        white-space: normal;
+        word-break: break-all;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+      }
+      .tag[data-tooltip]:hover::before {
+        content: "";
+        position: absolute;
+        left: 14px;
+        top: calc(100% + 3px);
+        width: 10px;
+        height: 10px;
+        transform: rotate(45deg);
+        background: rgba(17, 24, 39, 0.92);
+        border-left: 1px solid rgba(15, 23, 42, 0.12);
+        border-top: 1px solid rgba(15, 23, 42, 0.12);
+        z-index: 29;
+      }
+      .checkbox {
+        width: 14px;
+        height: 14px;
+        accent-color: var(--primary);
+        cursor: pointer;
+      }
+      .expand-btn {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        border: 0;
+        background: transparent;
+        color: #8b95a7;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      .expand-btn:hover {
+        background: rgba(31, 35, 41, 0.06);
+        color: #4b5563;
+      }
+      .expand-btn svg {
+        width: 20px;
+        height: 20px;
+        display: block;
+        transition: transform 160ms ease;
+        transform: rotate(-90deg); /* 默认折叠：向右 */
+      }
+      .expand-btn[aria-expanded="true"] svg {
+        transform: rotate(0deg); /* 展开：向下 */
+      }
+      .expand-spacer {
+        display: inline-block;
+        width: 26px;
+        height: 26px;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      .confirm-table tr.child-row td:nth-child(3) {
+        /* 子行在第一列留空后，产品名称再缩进一点，形成树形层级效果 */
+        padding-left: 28px;
+      }
+      .confirm-table tr.group-row {
+        background: #fafcff;
+      }
+      .confirm-table tr.group-row:hover {
+        background: #f3f8ff;
+      }
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 14px 22px 18px 22px;
+        border-top: 1px solid var(--line);
+        margin-top: 12px;
+      }
+      .btn {
+        height: 34px;
+        min-width: 72px;
+        padding: 0 14px;
+        border-radius: var(--radius-sm);
+        border: 1px solid #d7dce6;
+        background: #fff;
+        color: #374151;
+        cursor: pointer;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .btn:hover {
+        border-color: #c8ceda;
+        background: #fafbfc;
+      }
+      .btn-primary {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #0f66e7;
+        border-color: #0f66e7;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .info-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1px solid #cbd5e1;
+        color: #94a3b8;
+        font-size: 10px;
+        margin-left: 6px;
+        transform: translateY(-1px);
+      }
+      @media (max-width: 980px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+        .label {
+          padding-top: 0;
+        }
+        .top-info {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay" role="presentation">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="手动搭建">
+        <div class="modal-header">
+          <div class="modal-title">手动搭建</div>
+          <button class="close" type="button" aria-label="关闭" title="关闭" id="btnClose">
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div id="step1">
+          <div class="row">
+            <div class="label">投放媒体</div>
+            <div class="radio-group" id="mediaGroup">
+              <label class="radio">
+                <input type="radio" name="media" value="Facebook" />
+                <span>Facebook</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="media" value="Tiktok" />
+                <span>Tiktok</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="media" value="AppLovin" checked />
+                <span>AppLovin</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="media" value="Adwords" />
+                <span>Adwords</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="media" value="Unity" />
+                <span>Unity</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="label">搭建素材</div>
+            <div>
+              <div class="top-info">
+                <div class="info-col">
+                  <div class="info-title">素材关联App</div>
+                  <div class="info-list" id="relatedApps">
+                    <div>Tile01A</div>
+                    <div>Tile01G</div>
+                  </div>
+                  <div class="tip">说明：仅素材关联产品与搭建规则的产品相同的素材可进行搭建</div>
+                </div>
+                <div class="info-col">
+                  <div class="info-title">已选素材数</div>
+                  <div class="info-num">
+                    <div>15</div>
+                    <div>15</div>
+                  </div>
+                </div>
+                <div class="info-col">
+                  <div class="info-title">
+                    已选可搭建素材数 <span class="info-icon" title="提示">i</span>
+                  </div>
+                  <div class="info-num" id="buildableCounts">
+                    <div>13</div>
+                    <div>13</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="section-title">匹配规则</div>
+          <div class="row row-center row-compact" style="margin-bottom: 10px">
+            <div class="label">广告内素材数量：</div>
+            <div class="radio-group" id="assetCountMode">
+              <label class="radio">
+                <input type="radio" name="assetCountMode" value="single" />
+                <span>单素材</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="assetCountMode" value="multiple" checked />
+                <span>多素材</span>
+              </label>
+            </div>
+          </div>
+          <div
+            class="row row-center row-compact"
+            id="groupLimitRow"
+            style="margin-bottom: 10px; display: none"
+          >
+            <div class="label">素材分组数量上限：</div>
+            <div>
+              <input
+                class="input"
+                id="groupLimitInput"
+                type="number"
+                inputmode="numeric"
+                min="2"
+                max="10"
+                step="1"
+                value="10"
+                placeholder="2~10"
+              />
+              <div class="error-text" id="groupLimitError">请输入 2~10 的正整数</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table aria-label="匹配规则表格">
+              <thead>
+                <tr>
+                  <th class="col-idx">序号</th>
+                  <th>产品名称</th>
+                  <th>Campaign</th>
+                  <th>搭建规则</th>
+                  <th>资产配置</th>
+                  <th class="col-op">操作</th>
+                </tr>
+              </thead>
+              <tbody id="ruleTbody">
+                <tr>
+                  <td class="col-idx">1</td>
+                  <td>
+                    <select class="select">
+                      <option value="" disabled>请选择产品名称</option>
+                      <option selected>Tile01A</option>
+                      <option>Tile01G</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="select">
+                      <option value="" disabled>请选择Campaign</option>
+                      <option selected>Campaign-01</option>
+                      <option>Campaign-02</option>
+                      <option>Campaign-03</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="select">
+                      <option value="" disabled>请选择搭建规则</option>
+                      <option selected>规则-01</option>
+                      <option>规则-02</option>
+                      <option>规则-03</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="select">
+                      <option value="" disabled>请选择资产配置</option>
+                      <option selected>配置-01</option>
+                      <option>配置-02</option>
+                      <option>配置-03</option>
+                    </select>
+                  </td>
+                  <td class="muted"></td>
+                </tr>
+                <tr>
+                  <td class="col-idx">2</td>
+                  <td>
+                    <select class="select">
+                      <option value="" disabled>请选择产品名称</option>
+                      <option selected>Tile01A</option>
+                      <option>Tile01G</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="select">
+                      <option value="" disabled>请选择Campaign</option>
+                      <option selected>Campaign-01</option>
+                      <option>Campaign-02</option>
+                      <option>Campaign-03</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="select">
+                      <option value="" disabled>请选择搭建规则</option>
+                      <option>规则-01</option>
+                      <option selected>规则-02</option>
+                      <option>规则-03</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="select">
+                      <option value="" disabled>请选择资产配置</option>
+                      <option>配置-01</option>
+                      <option selected>配置-02</option>
+                      <option>配置-03</option>
+                    </select>
+                  </td>
+                  <td class="muted"></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="add-rule"><a href="#" id="addRule">+ 添加匹配规则</a></div>
+          </div>
+          </div>
+
+          <div id="step2" style="display: none">
+            <div class="section-title" style="margin-top: 4px">组合列表</div>
+            <div class="table-wrap">
+              <table class="confirm-table" aria-label="素材资产组合筛选确认表格">
+                <colgroup>
+                  <col style="width: 44px" />
+                  <col style="width: 56px" />
+                  <col style="width: 110px" />
+                  <col style="width: 120px" />
+                  <col style="width: 110px" />
+                  <col style="width: 110px" />
+                  <col style="width: 420px" />
+                  <col style="width: 140px" />
+                  <col style="width: 150px" />
+                  <col style="width: 150px" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th style="text-align: center"></th>
+                    <th style="text-align: center; white-space: nowrap">
+                      <input class="checkbox" type="checkbox" id="selectAll" aria-label="全选" />
+                    </th>
+                    <th>产品名称</th>
+                    <th>Campaign</th>
+                    <th>搭建规则</th>
+                    <th>资产配置</th>
+                    <th>素材名称</th>
+                    <th style="white-space: nowrap">CPP</th>
+                    <th>Endcard</th>
+                    <th>CreativeSet命名</th>
+                  </tr>
+                </thead>
+                <tbody id="confirmTbody">
+                  <!-- 由第一页的表格选择动态生成 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn" type="button" id="btnCancel">取消</button>
+          <button class="btn" type="button" id="btnPrev" style="display: none">
+            上一页
+          </button>
+          <button class="btn btn-primary" type="button" id="btnNext">下一步</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const overlay = document.querySelector(".overlay");
+      const modal = document.querySelector(".modal");
+      const modalTitle = document.querySelector(".modal-title");
+      const btnClose = document.getElementById("btnClose");
+      const btnCancel = document.getElementById("btnCancel");
+      const btnPrev = document.getElementById("btnPrev");
+      const btnNext = document.getElementById("btnNext");
+      const addRule = document.getElementById("addRule");
+      const ruleTbody = document.getElementById("ruleTbody");
+      const step1 = document.getElementById("step1");
+      const step2 = document.getElementById("step2");
+      const selectAll = document.getElementById("selectAll");
+      const confirmTbody = document.getElementById("confirmTbody");
+      const groupLimitRow = document.getElementById("groupLimitRow");
+      const groupLimitInput = document.getElementById("groupLimitInput");
+      const groupLimitError = document.getElementById("groupLimitError");
+      const relatedAppsEl = document.getElementById("relatedApps");
+      const buildableCountsEl = document.getElementById("buildableCounts");
+
+      function reindexRules() {
+        Array.from(ruleTbody.querySelectorAll("tr")).forEach((tr, i) => {
+          const idxCell = tr.querySelector(".col-idx");
+          if (idxCell) idxCell.textContent = String(i + 1);
+
+          // 第 1 行不展示删除按钮；第 2 行起展示
+          const opCell = tr.querySelector("td:last-child");
+          if (!opCell) return;
+          const hasDelete = !!opCell.querySelector("[data-action='delete']");
+          if (i === 0) {
+            if (hasDelete) opCell.innerHTML = "";
+          } else {
+            if (!hasDelete) {
+              opCell.innerHTML =
+                "<button type='button' class='op-btn op-btn-danger' data-action='delete'>删除</button>";
+            }
+          }
+        });
+      }
+
+      function closeModal() {
+        overlay.style.display = "none";
+      }
+
+      btnClose.addEventListener("click", closeModal);
+      btnCancel.addEventListener("click", closeModal);
+
+      // 点击遮罩关闭（更像常见弹窗行为；如果你不想要可删掉）
+      overlay.addEventListener("click", (e) => {
+        if (!modal.contains(e.target)) closeModal();
+      });
+
+      // 防止 modal 内部点击冒泡触发 overlay 点击逻辑
+      modal.addEventListener("click", (e) => e.stopPropagation());
+
+      function gotoStep1() {
+        step2.style.display = "none";
+        step1.style.display = "block";
+        modalTitle.textContent = "手动搭建";
+        btnNext.textContent = "下一步";
+        btnPrev.style.display = "none";
+      }
+
+      function gotoStep2() {
+        step1.style.display = "none";
+        step2.style.display = "block";
+        modalTitle.textContent = "素材资产组合筛选确认";
+        btnNext.textContent = "确认";
+        btnPrev.style.display = "inline-flex";
+        buildConfirmRowsFromStep1();
+      }
+
+      addRule.addEventListener("click", (e) => {
+        e.preventDefault();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="col-idx"></td>
+          <td>
+            <select class="select">
+              <option value="" disabled>请选择产品名称</option>
+              <option selected>Tile01A</option>
+              <option>Tile01G</option>
+            </select>
+          </td>
+          <td>
+            <select class="select">
+              <option value="" disabled>请选择Campaign</option>
+              <option selected>Campaign-01</option>
+              <option>Campaign-02</option>
+              <option>Campaign-03</option>
+            </select>
+          </td>
+          <td>
+            <select class="select">
+              <option value="" disabled>请选择搭建规则</option>
+              <option selected>规则-01</option>
+              <option>规则-02</option>
+              <option>规则-03</option>
+            </select>
+          </td>
+          <td>
+            <select class="select">
+              <option value="" disabled>请选择资产配置</option>
+              <option selected>配置-01</option>
+              <option>配置-02</option>
+              <option>配置-03</option>
+            </select>
+          </td>
+          <td class="muted"></td>
+        `;
+        ruleTbody.appendChild(tr);
+        reindexRules();
+      });
+
+      ruleTbody.addEventListener("click", (e) => {
+        const target = e.target;
+        if (!(target instanceof Element)) return;
+        const btn = target.closest("[data-action='delete']");
+        if (btn) {
+          const tr = btn.closest("tr");
+          if (tr) tr.remove();
+          reindexRules();
+        }
+      });
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function getRuleRowValues(tr) {
+        const selects = tr.querySelectorAll("select.select");
+        const product = selects?.[0]?.value || "";
+        const campaign = selects?.[1]?.value || "";
+        const buildRule = selects?.[2]?.value || "";
+        const assetCfg = selects?.[3]?.value || "";
+        return { product, campaign, buildRule, assetCfg };
+      }
+
+      function getBuildableCountMapFromPage() {
+        // 从“素材关联App”和“已选可搭建素材数”两列解析出映射关系（例如 Tile01A -> 13）
+        const apps = Array.from(relatedAppsEl?.querySelectorAll("div") || []).map((d) =>
+          (d.textContent || "").trim()
+        );
+        const counts = Array.from(buildableCountsEl?.querySelectorAll("div") || []).map((d) =>
+          Number((d.textContent || "").trim())
+        );
+        const map = {};
+        apps.forEach((app, i) => {
+          const n = counts[i];
+          if (app) map[app] = Number.isFinite(n) ? n : 0;
+        });
+        return map;
+      }
+
+      function splitIntoGroups(total, limit) {
+        const groups = [];
+        let rest = Math.max(0, Number(total) || 0);
+        const lim = Math.max(1, Number(limit) || 1);
+        while (rest > 0) {
+          const size = Math.min(lim, rest);
+          groups.push(size);
+          rest -= size;
+        }
+        return groups;
+      }
+
+      function makeFakeMaterialNames(product, groupIndex, size) {
+        // 名字你说可以杜撰，这里生成一些“看起来很真实”的长文件名
+        const list = [];
+        for (let i = 1; i <= size; i++) {
+          const idx = String(i).padStart(2, "0");
+          const g = String(groupIndex + 1).padStart(2, "0");
+          list.push(
+            `20251223_${product}_EN_9x16_FX-GamePlay_SC-59s_ZT-YC-[[Wanfa]]_BH-LJQ000${g}${idx}_LVL1-tree_LVL2-fang_LVL3-kou_LVL4-hui_RS-P1X1R3C1M3_Jocelyn_${g}-${idx}.mp4`
+          );
+        }
+        return list;
+      }
+
+      function normalizeToken(s) {
+        return String(s || "")
+          .trim()
+          .replaceAll(/\s+/g, "")
+          .replaceAll(/[^a-zA-Z0-9_-]/g, "");
+      }
+
+      function makeCreativeSetName({ product, campaign, buildRule, assetCfg, groupIndex }) {
+        // 参考你给的示例命名风格：
+        // 20251225_DCGrapeOrangeWoodChicken3step_farm1_20251225_APP2_EN_9x16_FX-AIZR_Bonus_ZT-UnlockTreasureBlackKB2-60s_LVL1-iap_RS-P3X1R1C3_YHB-NJC
+        // 这里用固定骨架 + 把你在第一页选择的信息拼进去，让原型里看起来更接近真实数据。
+        const date = "20251225";
+        const p = normalizeToken(product) || "APP";
+        const c = normalizeToken(campaign) || "CAMP";
+        const r = normalizeToken(buildRule) || "RULE";
+        const a = normalizeToken(assetCfg) || "ASSET";
+        const g = `G${Number(groupIndex) + 1}`;
+
+        return `${date}_DCGrapeOrangeWoodChicken3step_${p}_farm1_${date}_${c}_EN_9x16_FX-AIZR_${r}_ZT-${a}-60s_LVL1-iap_RS-P3X1R1C3_${g}_YHB-NJC`;
+      }
+
+      function getAssetConfigData(assetCfg) {
+        // 你描述的假设数据：
+        // - 配置-01：endcard < 10，cpp = 1
+        // - 配置-02：endcard > 10，cpp > 1
+        // 其他配置给一个合理的默认
+        const mkEndcards = (n, prefix) =>
+          Array.from({ length: n }, (_, i) => `${prefix || "endcard"}_${String(i + 1).padStart(2, "0")}.html`);
+
+        if (assetCfg === "配置-01") {
+          return {
+            endcards: mkEndcards(8, "endcard_A"),
+            cpps: [1.2],
+          };
+        }
+        if (assetCfg === "配置-02") {
+          return {
+            endcards: mkEndcards(12, "endcard_B"),
+            // 多个 CPP（这里放多一些，方便你看到滚动效果）
+            cpps: [1.05, 1.07, 1.09, 1.1, 1.12, 1.14, 1.16, 1.18, 1.2, 1.22, 1.24, 1.26],
+          };
+        }
+        if (assetCfg === "配置-03") {
+          return {
+            endcards: mkEndcards(6, "endcard_C"),
+            cpps: [1.18, 1.25],
+          };
+        }
+        return {
+          endcards: mkEndcards(5, "endcard_D"),
+          cpps: [1.15],
+        };
+      }
+
+      function buildConfirmRowsFromStep1() {
+        if (!confirmTbody) return;
+        const rows = Array.from(ruleTbody.querySelectorAll("tr"));
+        confirmTbody.innerHTML = "";
+        const buildableMap = getBuildableCountMapFromPage();
+        const limit = Number((groupLimitInput?.value || "").trim()) || 10;
+
+        // 规则行 × 素材分组 组合生成
+        rows.forEach((tr, ruleIdx) => {
+          const { product, campaign, buildRule, assetCfg } = getRuleRowValues(tr);
+          const p = product || "—";
+          const c = campaign || "—";
+          const r = buildRule || "—";
+          const a = assetCfg || "—";
+
+          const cfgData = assetCfg ? getAssetConfigData(assetCfg) : { endcards: [], cpps: [] };
+          const endcards = cfgData.endcards || [];
+          const cpps = cfgData.cpps || [];
+
+          const total = product ? buildableMap[product] ?? 0 : 0;
+          const groupSizes = product ? splitIntoGroups(total, limit) : [];
+
+          // 如果产品没选或解析不到数量，就至少给一行占位，避免空白
+          const effectiveGroups = groupSizes.length > 0 ? groupSizes : [0];
+          const groupId = `rule-${ruleIdx}`;
+          const hasExpand = effectiveGroups.length > 1;
+
+          effectiveGroups.forEach((size, groupIndex) => {
+            const materials = size > 0 ? makeFakeMaterialNames(product, groupIndex, size) : ["—"];
+            const materialCount = size > 0 ? size : 0;
+            const materialTags = materials
+              .map(
+                (name) =>
+                  `<span class="tag" data-tooltip="${escapeHtml(name)}">${escapeHtml(name)}</span>`
+              )
+              .join("");
+
+            const csName = product
+              ? makeCreativeSetName({ product, campaign, buildRule, assetCfg, groupIndex })
+              : "—";
+
+            // CPP：只有 1 个则直接展示；>1 个则显示「选择」
+            const rowKey = `${ruleIdx}-${groupIndex}`;
+            const cppNames = cpps.map((n) => `CPP_${Number(n).toFixed(2)}`);
+            const cppApplyHtml =
+              hasExpand && groupIndex === 0
+                ? `<button type="button" class="cpp-apply-btn" data-action="cpp-apply-group" data-group-id="${groupId}">
+                     应用至全部
+                   </button>`
+                : "";
+            const cppOptionsHtml = cppNames
+              .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+              .join("");
+            const cppBox = `
+              <div class="cell-inner">
+                <div class="cpp-box" data-cpps='${escapeHtml(JSON.stringify(cppNames))}' data-selected-cpp="">
+                  <div class="cpp-controls">
+                    <label class="radio radio-sm">
+                      <input type="radio" name="cppMode-${rowKey}" value="none" checked />
+                      <span>不指定CPP</span>
+                    </label>
+                    <label class="radio radio-sm">
+                      <input type="radio" name="cppMode-${rowKey}" value="specify" />
+                      <span>指定CPP</span>
+                    </label>
+                  </div>
+                  <div class="cpp-select-wrap" data-cpp-select-wrap>
+                    <select class="select cpp-select" data-cpp-select>
+                      ${cppOptionsHtml}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            `;
+
+            // Endcard：多选下拉（必选）
+            // - <=10：默认全选
+            // - >10：默认不选，placeholder 显示“请选择”
+            const endcardCount = endcards.length;
+            const endSelected = endcardCount > 0 && endcardCount <= 10 ? [...endcards] : [];
+            const endIsPlaceholder = endcardCount > 10;
+            const endApplyHtml =
+              hasExpand && groupIndex === 0
+                ? `<button type="button" class="endcard-apply-btn" data-action="endcard-apply-group" data-group-id="${groupId}">
+                     应用至全部
+                   </button>`
+                : "";
+            const endOptionsHtml = endcards
+              .map((name) => {
+                const checked = endSelected.includes(name) ? "checked" : "";
+                return `
+                  <label class="endcard-item">
+                    <input type="checkbox" data-endcard-item value="${escapeHtml(name)}" ${checked}/>
+                    <div class="name">${escapeHtml(name)}</div>
+                  </label>
+                `;
+              })
+              .join("");
+            const endcardCell = `
+              <div class="cell-inner">
+                <div class="endcard-dd" data-endcards='${escapeHtml(JSON.stringify(endcards))}' data-selected='${escapeHtml(JSON.stringify(endSelected))}'>
+                  <button type="button" class="endcard-trigger ${endIsPlaceholder ? "is-placeholder" : ""}" data-action="endcard-toggle">
+                    <div class="endcard-values" data-endcard-values></div>
+                    <span class="caret" aria-hidden="true"></span>
+                  </button>
+                  <div class="endcard-panel" hidden>
+                    <label class="endcard-all">
+                      <input type="checkbox" data-action="endcard-select-all" />
+                      <span>全选</span>
+                    </label>
+                    <div class="endcard-list">
+                      ${endOptionsHtml || `<div class="muted" style="padding: 6px 6px;">无可选Endcard</div>`}
+                    </div>
+                  </div>
+                  <div class="endcard-error">请选择Endcard</div>
+                </div>
+              </div>
+              ${endApplyHtml}
+            `;
+
+            const row = document.createElement("tr");
+            row.setAttribute("data-row-key", rowKey);
+            row.setAttribute("data-group-id", groupId);
+            row.setAttribute("data-group-index", String(groupIndex));
+            // 进入第二页时默认展开：组内子行默认可见
+            if (hasExpand && groupIndex > 0) row.hidden = false;
+            if (hasExpand && groupIndex === 0) row.classList.add("group-row");
+            if (groupIndex > 0) row.classList.add("child-row");
+            row.innerHTML = `
+              <td style="text-align: center">
+                ${
+                  hasExpand && groupIndex === 0
+                    ? `<button type="button" class="expand-btn" data-action="toggle-group" data-group-id="${groupId}" aria-label="展开/收起" aria-expanded="true" title="展开/收起">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>`
+                    : `<span class="expand-spacer"></span>`
+                }
+              </td>
+              <td style="text-align: center">
+                <input class="checkbox row-check" type="checkbox" aria-label="选择行" />
+              </td>
+              <td>${escapeHtml(p)}</td>
+              <td>${escapeHtml(c)}</td>
+              <td>${escapeHtml(r)}</td>
+              <td>${escapeHtml(a)}</td>
+              <td class="material-td">
+                <div class="cell-inner">
+                  <div class="hscroll" aria-label="素材名称列表">
+                    ${materialTags}
+                  </div>
+                </div>
+                <div class="cell-count">共${materialCount}条</div>
+              </td>
+              <td class="cpp-td">
+                ${cppBox}
+                ${cppApplyHtml}
+              </td>
+              <td class="endcard-td">${endcardCell}</td>
+              <td class="cs-td">
+                <div class="cs-cell" data-cs-cell>
+                  <span class="cs-text" data-cs-text title="${escapeHtml(csName)}">${escapeHtml(csName)}</span>
+                </div>
+                <button type="button" class="cs-icon-btn" data-action="cs-edit" aria-label="编辑CreativeSet命名" title="编辑">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M14.06 4.19 17.81 7.94" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </td>
+            `;
+            confirmTbody.appendChild(row);
+          });
+        });
+
+        // Endcard 下拉：生成完后做一次回显初始化（把默认勾选渲染成 pills）
+        endcardInitAll();
+
+        // 生成完后重置全选状态
+        if (selectAll) {
+          // 第二页默认全选
+          selectAll.checked = true;
+          selectAll.indeterminate = false;
+        }
+
+        // 第二页默认勾选全部行
+        confirmTbody.querySelectorAll(".row-check").forEach((el) => {
+          el.checked = true;
+        });
+
+        // 给确认页所有 tag 自动补 tooltip（如果没显式提供）
+        document.querySelectorAll(".tag").forEach((el) => {
+          if (!el.getAttribute("data-tooltip")) {
+            const text = (el.textContent || "").trim();
+            if (text) el.setAttribute("data-tooltip", text);
+          }
+        });
+      }
+
+      btnNext.addEventListener("click", () => {
+        // 多素材：进入“素材资产组合筛选确认”
+        const assetMode = document.querySelector(
+          "input[name='assetCountMode']:checked"
+        )?.value;
+        if (assetMode === "multiple") {
+          // 校验：素材分组数量上限（2~10 正整数，必填）
+          const valRaw = (groupLimitInput?.value || "").trim();
+          const isInt = /^[1-9]\d*$/.test(valRaw);
+          const valNum = isInt ? Number(valRaw) : NaN;
+          const ok = isInt && valNum >= 2 && valNum <= 10;
+          if (!ok) {
+            if (groupLimitInput) groupLimitInput.classList.add("is-error");
+            if (groupLimitError) groupLimitError.style.display = "block";
+            if (groupLimitInput) groupLimitInput.focus();
+            return;
+          }
+
+          // 若已经在确认页，再点“确认”先做示例提示
+          if (step2.style.display !== "none") {
+            // Endcard 必选校验
+            let firstError = null;
+            confirmTbody?.querySelectorAll(".endcard-dd").forEach((dd) => {
+              if (!(dd instanceof HTMLElement)) return;
+              const trigger = dd.querySelector(".endcard-trigger");
+              const err = dd.querySelector(".endcard-error");
+              if (!(trigger instanceof HTMLElement) || !(err instanceof HTMLElement)) return;
+              let selected = [];
+              try {
+                selected = JSON.parse(dd.getAttribute("data-selected") || "[]");
+              } catch {
+                selected = [];
+              }
+              const has = Array.isArray(selected) && selected.length > 0;
+              if (!has) {
+                trigger.classList.add("is-error");
+                err.style.display = "block";
+                if (!firstError) firstError = trigger;
+              } else {
+                trigger.classList.remove("is-error");
+                err.style.display = "none";
+              }
+            });
+            if (firstError) {
+              firstError.scrollIntoView({ block: "center", behavior: "smooth" });
+              return;
+            }
+
+            alert("确认（示例）：已点击");
+            return;
+          }
+          gotoStep2();
+          return;
+        }
+
+        // 单素材：这里先保持示例行为（你后续如果也要做第二步，我再按你的逻辑补）
+        alert("下一步（示例）：单素材模式");
+      });
+
+      btnPrev.addEventListener("click", () => {
+        gotoStep1();
+      });
+
+      // 初始化（确保如果未来默认多行也能符合“第2行起显示删除”）
+      reindexRules();
+
+      function refreshGroupLimitVisibility() {
+        const assetMode = document.querySelector(
+          "input[name='assetCountMode']:checked"
+        )?.value;
+        if (!groupLimitRow) return;
+        const show = assetMode === "multiple";
+        groupLimitRow.style.display = show ? "grid" : "none";
+        if (!show) {
+          if (groupLimitInput) groupLimitInput.classList.remove("is-error");
+          if (groupLimitError) groupLimitError.style.display = "none";
+        }
+      }
+
+      // 多素材时显示「素材分组数量上限」
+      document.querySelectorAll("input[name='assetCountMode']").forEach((el) => {
+        el.addEventListener("change", refreshGroupLimitVisibility);
+      });
+      refreshGroupLimitVisibility();
+
+      // 输入时清理错误，并做简单清洗（只保留数字，限制 2~10）
+      if (groupLimitInput) {
+        groupLimitInput.addEventListener("input", () => {
+          groupLimitInput.classList.remove("is-error");
+          if (groupLimitError) groupLimitError.style.display = "none";
+
+          // 清理非数字
+          const cleaned = (groupLimitInput.value || "").replace(/[^\d]/g, "");
+          if (cleaned !== groupLimitInput.value) groupLimitInput.value = cleaned;
+        });
+        groupLimitInput.addEventListener("blur", () => {
+          const valRaw = (groupLimitInput.value || "").trim();
+          if (!valRaw) return;
+          const isInt = /^[1-9]\d*$/.test(valRaw);
+          const valNum = isInt ? Number(valRaw) : NaN;
+          if (isInt && valNum < 2) groupLimitInput.value = "2";
+          if (isInt && valNum > 10) groupLimitInput.value = "10";
+        });
+      }
+
+      // 确认页：全选/反选
+      if (selectAll && confirmTbody) {
+        selectAll.addEventListener("change", () => {
+          const checked = selectAll.checked;
+          confirmTbody.querySelectorAll(".row-check").forEach((el) => {
+            el.checked = checked;
+          });
+        });
+        confirmTbody.addEventListener("change", (e) => {
+          const target = e.target;
+          if (!(target instanceof HTMLInputElement)) return;
+          if (!target.classList.contains("row-check")) return;
+          const checks = Array.from(confirmTbody.querySelectorAll(".row-check"));
+          const allChecked = checks.length > 0 && checks.every((c) => c.checked);
+          const anyChecked = checks.some((c) => c.checked);
+          selectAll.checked = allChecked;
+          selectAll.indeterminate = !allChecked && anyChecked;
+        });
+      }
+
+      // 第二页分组展开/收起（事件委托）
+      if (confirmTbody) {
+        confirmTbody.addEventListener("click", (e) => {
+          const target = e.target;
+          if (!(target instanceof Element)) return;
+          const btn = target.closest("[data-action='toggle-group']");
+          if (!(btn instanceof HTMLElement)) return;
+          const groupId = btn.getAttribute("data-group-id");
+          if (!groupId) return;
+
+          const expanded = btn.getAttribute("aria-expanded") === "true";
+          const nextExpanded = !expanded;
+          btn.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
+
+          confirmTbody.querySelectorAll(`tr[data-group-id='${groupId}']`).forEach((tr) => {
+            const idx = tr.getAttribute("data-group-index");
+            if (idx === "0") return; // 组内第一条永远显示
+            tr.hidden = !nextExpanded;
+          });
+        });
+      }
+
+      function setCppModeAndValue(tdEl, { mode, value } = { mode: "none", value: "" }) {
+        const box = tdEl.querySelector(".cpp-box");
+        if (!box) return;
+        const wrap = box.querySelector("[data-cpp-select-wrap]");
+        const sel = box.querySelector("[data-cpp-select]");
+        if (!(sel instanceof HTMLSelectElement) || !(wrap instanceof HTMLElement)) return;
+
+        if (mode === "none") {
+          wrap.style.display = "none";
+          box.setAttribute("data-selected-cpp", "");
+          return;
+        }
+
+        wrap.style.display = "block";
+        if (value) {
+          sel.value = value;
+          box.setAttribute("data-selected-cpp", value);
+        } else {
+          // 如果只有一个选项，默认选中
+          if (sel.options.length === 1) {
+            sel.selectedIndex = 0;
+            box.setAttribute("data-selected-cpp", sel.value);
+          } else {
+            // 多个选项：保持当前或默认第一项
+            if (!sel.value && sel.options.length > 0) sel.selectedIndex = 0;
+            box.setAttribute("data-selected-cpp", sel.value || "");
+          }
+        }
+      }
+
+      // Endcard：多选下拉（回显/全选态/关闭面板）
+      function endcardCloseAllPanels(exceptDd = null) {
+        if (!confirmTbody) return;
+        confirmTbody.querySelectorAll(".endcard-dd").forEach((dd) => {
+          if (!(dd instanceof HTMLElement)) return;
+          if (exceptDd && dd === exceptDd) return;
+          const panel = dd.querySelector(".endcard-panel");
+          if (panel instanceof HTMLElement) panel.hidden = true;
+        });
+      }
+
+      function endcardSyncState(dd) {
+        const trigger = dd.querySelector(".endcard-trigger");
+        const values = dd.querySelector("[data-endcard-values]");
+        const err = dd.querySelector(".endcard-error");
+        const allBox = dd.querySelector("[data-action='endcard-select-all']");
+        const items = Array.from(dd.querySelectorAll("input[data-endcard-item]")).filter(
+          (x) => x instanceof HTMLInputElement
+        );
+
+        const selected = items
+          .filter((x) => x.checked)
+          .map((x) => x.value);
+
+        dd.setAttribute("data-selected", JSON.stringify(selected));
+
+        // 平铺回显（pills）
+        if (values instanceof HTMLElement) {
+          if (selected.length === 0) {
+            values.innerHTML = `<span class="endcard-placeholder">请选择</span>`;
+          } else {
+            values.innerHTML = selected
+              .map((name) => {
+                const safe = escapeHtml(name);
+                return `
+                  <span class="endcard-pill" title="${safe}">
+                    <span class="pill-text">${safe}</span>
+                    <button type="button" class="pill-remove" data-action="endcard-remove" data-name="${safe}" aria-label="移除">×</button>
+                  </span>
+                `;
+              })
+              .join("");
+          }
+        }
+        if (trigger instanceof HTMLElement) {
+          trigger.classList.toggle("is-placeholder", selected.length === 0);
+          trigger.classList.remove("is-error");
+        }
+        if (err instanceof HTMLElement) err.style.display = "none";
+
+        // select all state
+        if (allBox instanceof HTMLInputElement) {
+          const allChecked = items.length > 0 && selected.length === items.length;
+          const anyChecked = selected.length > 0;
+          allBox.checked = allChecked;
+          allBox.indeterminate = !allChecked && anyChecked;
+        }
+      }
+
+      function endcardInitAll() {
+        if (!confirmTbody) return;
+        confirmTbody.querySelectorAll(".endcard-dd").forEach((dd) => {
+          if (dd instanceof HTMLElement) endcardSyncState(dd);
+        });
+      }
+
+      // CPP：行内模式切换（事件委托，适配动态生成）
+      if (confirmTbody) {
+        // Endcard：多选下拉（事件委托，适配动态生成）
+        // 注意：每次 buildConfirmRowsFromStep1() 生成完表格后会调用 endcardInitAll() 做回显初始化
+
+        // toggle
+        confirmTbody.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof Element)) return;
+          // 移除 pill（不触发下拉开关）
+          const rm = t.closest("[data-action='endcard-remove']");
+          if (rm instanceof HTMLElement) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dd = rm.closest(".endcard-dd");
+            if (!(dd instanceof HTMLElement)) return;
+            const name = rm.getAttribute("data-name") || "";
+            dd.querySelectorAll("input[data-endcard-item]").forEach((x) => {
+              if (x instanceof HTMLInputElement && x.value === name) x.checked = false;
+            });
+            endcardSyncState(dd);
+            return;
+          }
+          const btn = t.closest("[data-action='endcard-toggle']");
+          if (!(btn instanceof HTMLElement)) return;
+          const dd = btn.closest(".endcard-dd");
+          if (!(dd instanceof HTMLElement)) return;
+          const panel = dd.querySelector(".endcard-panel");
+          if (!(panel instanceof HTMLElement)) return;
+          const next = !panel.hidden;
+          endcardCloseAllPanels(dd);
+          panel.hidden = next; // 点击自己：反向
+        });
+
+        // select all / item change
+        confirmTbody.addEventListener("change", (e) => {
+          const t = e.target;
+          if (!(t instanceof Element)) return;
+          const dd = t.closest(".endcard-dd");
+          if (!(dd instanceof HTMLElement)) return;
+
+          if ((t instanceof HTMLInputElement) && t.getAttribute("data-action") === "endcard-select-all") {
+            const checked = t.checked;
+            dd.querySelectorAll("input[data-endcard-item]").forEach((x) => {
+              if (x instanceof HTMLInputElement) x.checked = checked;
+            });
+            endcardSyncState(dd);
+            return;
+          }
+
+          if (t instanceof HTMLInputElement && t.hasAttribute("data-endcard-item")) {
+            endcardSyncState(dd);
+          }
+        });
+
+        // 点击外部关闭（只在第二页生效）
+        document.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof Element)) return;
+          if (step2.style.display === "none") return;
+          const inside = t.closest(".endcard-dd");
+          if (!inside) endcardCloseAllPanels(null);
+        });
+
+        // Endcard：应用至全部（同组内同步 Endcard 选择）
+        confirmTbody.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof Element)) return;
+          const btn = t.closest("[data-action='endcard-apply-group']");
+          if (!(btn instanceof HTMLElement)) return;
+          const groupId = btn.getAttribute("data-group-id");
+          if (!groupId) return;
+
+          const headRow = confirmTbody.querySelector(
+            `tr[data-group-id='${groupId}'][data-group-index='0']`
+          );
+          if (!(headRow instanceof HTMLTableRowElement)) return;
+          const headTd = headRow.querySelector("td.endcard-td");
+          if (!(headTd instanceof HTMLTableCellElement)) return;
+          const headDd = headTd.querySelector(".endcard-dd");
+          if (!(headDd instanceof HTMLElement)) return;
+
+          // 直接从 DOM 读取当前勾选（比读 data-selected 更可靠）
+          const selected = Array.from(
+            headDd.querySelectorAll("input[data-endcard-item]:checked")
+          )
+            .filter((x) => x instanceof HTMLInputElement)
+            .map((x) => x.value);
+
+          if (selected.length === 0) {
+            alert("请先在本组第一行选择Endcard，再应用至全部");
+            return;
+          }
+
+          confirmTbody
+            .querySelectorAll(`tr[data-group-id='${groupId}']`)
+            .forEach((tr) => {
+              if (!(tr instanceof HTMLTableRowElement)) return;
+              const td = tr.querySelector("td.endcard-td");
+              if (!(td instanceof HTMLTableCellElement)) return;
+              const dd = td.querySelector(".endcard-dd");
+              if (!(dd instanceof HTMLElement)) return;
+
+              // 先全取消
+              dd.querySelectorAll("input[data-endcard-item]").forEach((x) => {
+                if (x instanceof HTMLInputElement) x.checked = false;
+              });
+              // 再按组选中
+              dd.querySelectorAll("input[data-endcard-item]").forEach((x) => {
+                if (x instanceof HTMLInputElement && selected.includes(x.value)) x.checked = true;
+              });
+              endcardSyncState(dd);
+            });
+        });
+
+        confirmTbody.addEventListener("change", (e) => {
+          const target = e.target;
+          if (!(target instanceof HTMLInputElement)) return;
+          if (!target.name?.startsWith("cppMode-")) return;
+
+          const td = target.closest("td");
+          if (!td) return;
+          const box = td.querySelector(".cpp-box");
+          if (!box) return;
+
+          if (target.value === "none") {
+            setCppModeAndValue(td, { mode: "none" });
+            return;
+          }
+
+          // 指定CPP
+          // 行内下拉框：显示并默认选中（若仅 1 个则自动就是它）
+          const sel = box.querySelector("[data-cpp-select]");
+          if (sel instanceof HTMLSelectElement && sel.options.length > 0) {
+            setCppModeAndValue(td, { mode: "specify" });
+            return;
+          }
+
+          // 没有CPP数据，退回“不指定CPP”
+          const noneInput = td.querySelector(`input[name='${target.name}'][value='none']`);
+          if (noneInput instanceof HTMLInputElement) noneInput.checked = true;
+          setCppModeAndValue(td, { mode: "none" });
+        });
+
+        // 下拉框变化：记录选中值
+        confirmTbody.addEventListener("change", (e) => {
+          const target = e.target;
+          if (!(target instanceof HTMLSelectElement)) return;
+          if (!target.hasAttribute("data-cpp-select")) return;
+          const td = target.closest("td");
+          if (!td) return;
+          const box = td.querySelector(".cpp-box");
+          if (!box) return;
+          box.setAttribute("data-selected-cpp", target.value || "");
+        });
+
+        // 应用至全部（同组内同步 CPP）
+        confirmTbody.addEventListener("click", (e) => {
+          const target = e.target;
+          if (!(target instanceof Element)) return;
+          const btn = target.closest("[data-action='cpp-apply-group']");
+          if (!(btn instanceof HTMLElement)) return;
+          const groupId = btn.getAttribute("data-group-id");
+          if (!groupId) return;
+
+          const headRow = confirmTbody.querySelector(
+            `tr[data-group-id='${groupId}'][data-group-index='0']`
+          );
+          if (!(headRow instanceof HTMLTableRowElement)) return;
+          const headTd = headRow.querySelector("td.cpp-td");
+          if (!(headTd instanceof HTMLTableCellElement)) return;
+
+          const headBox = headTd.querySelector(".cpp-box");
+          if (!(headBox instanceof HTMLElement)) return;
+
+          const headMode =
+            headBox.querySelector("input[type='radio'][value='specify']")?.checked
+              ? "specify"
+              : "none";
+
+          let selected = headBox.getAttribute("data-selected-cpp") || "";
+          if (headMode === "specify") {
+            // 如果还没选，尝试从下拉框读取
+            const headSel = headBox.querySelector("[data-cpp-select]");
+            if (headSel instanceof HTMLSelectElement) selected = headSel.value || selected;
+          }
+
+          confirmTbody
+            .querySelectorAll(`tr[data-group-id='${groupId}']`)
+            .forEach((tr) => {
+              if (!(tr instanceof HTMLTableRowElement)) return;
+              const td = tr.querySelector("td.cpp-td");
+              if (!(td instanceof HTMLTableCellElement)) return;
+              const box = td.querySelector(".cpp-box");
+              if (!box) return;
+
+              const name = (box.querySelector("input[type='radio']")?.name || "").trim();
+              if (!name) return;
+
+              const noneInput = td.querySelector(`input[name='${name}'][value='none']`);
+              const specifyInput = td.querySelector(`input[name='${name}'][value='specify']`);
+
+              if (headMode === "none") {
+                if (noneInput instanceof HTMLInputElement) noneInput.checked = true;
+                setCppModeAndValue(td, { mode: "none" });
+                return;
+              }
+
+              // specify
+              if (specifyInput instanceof HTMLInputElement) specifyInput.checked = true;
+              setCppModeAndValue(td, { mode: "specify", value: selected });
+            });
+        });
+      }
+
+      // CreativeSet 命名：行内编辑（事件委托，适配动态生成）
+      if (confirmTbody) {
+        confirmTbody.addEventListener("click", (e) => {
+          const target = e.target;
+          if (!(target instanceof Element)) return;
+          const action = target.closest("[data-action]")?.getAttribute("data-action");
+          if (action !== "cs-edit") return;
+
+          const btn = target.closest("[data-action]");
+          if (!(btn instanceof HTMLElement)) return;
+          const td = btn.closest("td");
+          if (!td) return;
+          const cell = td.querySelector("[data-cs-cell]");
+          if (!(cell instanceof HTMLElement)) return;
+          const textEl = cell.querySelector("[data-cs-text]");
+          if (!(textEl instanceof HTMLElement)) return;
+
+          const isEditing = cell.getAttribute("data-editing") === "1";
+          const current = (textEl.textContent || "").trim();
+
+          if (!isEditing) {
+            cell.setAttribute("data-editing", "1");
+            btn.setAttribute("data-action", "cs-save");
+            btn.setAttribute("aria-label", "保存CreativeSet命名");
+            btn.setAttribute("title", "保存");
+            btn.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            `;
+
+            const input = document.createElement("input");
+            input.className = "cs-input";
+            input.value = current === "—" ? "" : current;
+            input.setAttribute("aria-label", "编辑CreativeSet命名");
+            input.setAttribute("data-cs-input", "1");
+
+            // 用输入框替换文本显示
+            textEl.style.display = "none";
+            cell.appendChild(input);
+            input.focus();
+            input.select();
+
+            input.addEventListener("keydown", (ev) => {
+              if (ev.key === "Enter") {
+                ev.preventDefault();
+                btn.click();
+              }
+              if (ev.key === "Escape") {
+                ev.preventDefault();
+                // 取消：恢复旧值
+                input.remove();
+                textEl.style.display = "";
+                cell.removeAttribute("data-editing");
+                btn.setAttribute("data-action", "cs-edit");
+                btn.setAttribute("aria-label", "编辑CreativeSet命名");
+                btn.setAttribute("title", "编辑");
+                btn.innerHTML = `
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M14.06 4.19 17.81 7.94" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                `;
+              }
+            });
+            return;
+          }
+        });
+
+        confirmTbody.addEventListener("click", (e) => {
+          const target = e.target;
+          if (!(target instanceof Element)) return;
+          const btn = target.closest("[data-action]");
+          if (!(btn instanceof HTMLElement)) return;
+          if (btn.getAttribute("data-action") !== "cs-save") return;
+
+          const td = btn.closest("td");
+          if (!td) return;
+          const cell = td.querySelector("[data-cs-cell]");
+          if (!(cell instanceof HTMLElement)) return;
+          const textEl = cell.querySelector("[data-cs-text]");
+          const input = cell.querySelector("[data-cs-input='1']");
+          if (!(textEl instanceof HTMLElement) || !(input instanceof HTMLInputElement)) return;
+
+          const next = (input.value || "").trim();
+          const finalVal = next || "—";
+          textEl.textContent = finalVal;
+          textEl.setAttribute("title", finalVal);
+
+          input.remove();
+          textEl.style.display = "";
+          cell.removeAttribute("data-editing");
+          btn.setAttribute("data-action", "cs-edit");
+          btn.setAttribute("aria-label", "编辑CreativeSet命名");
+          btn.setAttribute("title", "编辑");
+          btn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M14.06 4.19 17.81 7.94" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          `;
+        });
+      }
+
+      // 初始页先不生成确认表，进入 step2 时再按 step1 生成
+    </script>
+  </body>
+</html>
+
+
