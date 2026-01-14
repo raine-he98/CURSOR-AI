@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>场景化素材测试 - 上传成片</title>
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+      html, body { height: 100%; margin: 0; background: #fff; font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif; }
+      #app { padding: 20px 30px; box-sizing: border-box; }
+      .header { display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #ebeef5; padding-bottom: 15px; }
+      .back-btn { margin-right: 15px; font-size: 18px; cursor: pointer; color: #606266; }
+      .back-btn:hover { color: #409EFF; }
+      .title { font-size: 18px; font-weight: bold; color: #303133; }
+      .form-container { width: 100%; }
+      .upload-demo .el-upload-dragger { width: 100%; }
+      .footer-actions { margin-top: 30px; padding: 20px 0; border-top: 1px solid #ebeef5; text-align: left; }
+      
+      /* 模块标题样式 */
+      .section-title {
+        font-size: 15px;
+        font-weight: bold;
+        color: #303133;
+        margin: 25px 0 15px 0;
+        display: flex;
+        align-items: center;
+      }
+      .section-title::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 16px;
+        background: #409EFF;
+        margin-right: 8px;
+        border-radius: 2px;
+      }
+      .section-title:first-of-type { margin-top: 10px; }
+
+      /* 核心：彻底消除表格内部滚动条，改为页面自然溢出 */
+      .test-config-container {
+        width: 100%;
+        overflow-x: auto;
+        margin-bottom: 20px;
+        border: 1px solid #ebeef5;
+        border-radius: 8px;
+      }
+      .test-config-table.el-table {
+        table-layout: fixed !important;
+      }
+      /* 强制单元格内容铺开，不换行 */
+      .el-table .cell {
+        white-space: nowrap !important;
+        padding: 10px 15px !important;
+      }
+      /* 消除表格闪烁/跳动 */
+      .el-table::before, .el-table::after { display: none; }
+      .test-config-table { width: auto !important; min-width: auto !important; }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <el-alert
+        title="温馨提示：请确保上传素材在同一批次里面：1. 目标产品一致 2. 目标媒体一致 3. 测试类型相同"
+        type="warning"
+        show-icon
+        :closable="false"
+        style="margin-bottom: 20px;">
+      </el-alert>
+
+      <div class="form-container">
+        <el-form :model="uploadForm" label-width="120px" size="small">
+          <div class="section-title">基本信息</div>
+          <el-form-item label="产品名称" required>
+            <el-select v-model="uploadForm.selectedProducts" multiple placeholder="请选择产品名称" style="width: 100%;">
+              <el-option v-for="item in productOptions" :key="item" :label="item" :value="item"></el-option>
+            </el-select>
+          </el-form-item>
+          
+          <el-form-item label="目标媒体" required>
+            <el-checkbox-group v-model="uploadForm.media" style="white-space: nowrap;">
+              <el-checkbox label="Facebook" disabled></el-checkbox>
+              <el-checkbox label="AppLovin"></el-checkbox>
+              <el-checkbox label="Adwords"></el-checkbox>
+              <el-checkbox label="Tiktok"></el-checkbox>
+              <el-checkbox label="Unity"></el-checkbox>
+            </el-checkbox-group>
+            <div style="margin-top: 8px; padding: 8px 12px; background-color: #f4f4f5; border-radius: 4px; display: flex; align-items: flex-start; gap: 6px;">
+              <i class="el-icon-info" style="color: #909399; margin-top: 2px;"></i>
+              <span style="color: #606266; font-size: 12px; line-height: 1.5;">
+                请针对不同渠道进行素材创意制作和优化，以提高测试成功率。
+              </span>
+            </div>
+          </el-form-item>
+
+          <div class="section-title">测试信息</div>
+          <el-form-item label="测试类型" required>
+            <el-radio-group v-model="uploadForm.globalTestType">
+              <el-radio label="opt">老素材优化测试</el-radio>
+              <el-radio label="new">新方向测试</el-radio>
+            </el-radio-group>
+          </el-form-item>
+
+          <el-form-item label="测试明细" v-if="uploadForm.media.length > 0 && uploadForm.selectedProducts.length > 0" required>
+            <div class="test-config-container">
+              <el-table :data="uploadForm.selectedProducts.map(p => ({ name: p }))" border size="mini" class="test-config-table" :style="{ width: tableWidth }" :key="refreshKey">
+                <el-table-column label="产品" width="120" prop="name" align="center" fixed></el-table-column>
+                <el-table-column v-for="m in uploadForm.media" :key="m" width="300">
+                  <template slot="header" slot-scope="scope">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                      <span>{{ m }}</span>
+                      <el-button type="text" size="mini" icon="el-icon-copy-document" @click="applyToAllProducts(m)" style="padding: 0;">应用至全部</el-button>
+                    </div>
+                  </template>
+                  <template slot-scope="scope">
+                    <div v-if="uploadForm.mediaSettings[scope.row.name] && uploadForm.mediaSettings[scope.row.name][m]">
+                      <div style="display: flex; align-items: center; white-space: nowrap; gap: 10px;">
+                        <el-checkbox 
+                          v-model="uploadForm.mediaSettings[scope.row.name][m].isTesting" 
+                          true-label="yes" 
+                          false-label="no">
+                          测试
+                        </el-checkbox>
+                        <el-select 
+                          v-if="uploadForm.mediaSettings[scope.row.name][m].isTesting === 'yes'"
+                          v-model="uploadForm.mediaSettings[scope.row.name][m].selectedPacks" 
+                          multiple 
+                          collapse-tags
+                          placeholder="选择素材包" 
+                          size="mini" 
+                          style="width: 150px;">
+                          <el-option v-for="item in packOptions" :key="item" :label="item" :value="item"></el-option>
+                        </el-select>
+                      </div>
+                    </div>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </el-form-item>
+
+          <el-form-item required>
+            <template slot="label">
+              <span>{{ uploadForm.globalTestType === 'opt' ? '对比标杆' : '跑量标杆' }}</span>
+            </template>
+            <el-select v-model="uploadForm.globalBenchmark" placeholder="请选择标杆" style="width: 100%;" clearable>
+              <el-option v-for="opt in benchmarkOptions" :key="opt" :label="opt" :value="opt"></el-option>
+            </el-select>
+            <div style="margin-top: 8px; padding: 8px 12px; background-color: #f4f4f5; border-radius: 4px; display: flex; align-items: flex-start; gap: 6px;">
+              <i class="el-icon-info" style="color: #909399; margin-top: 2px;"></i>
+              <span style="color: #606266; font-size: 12px; line-height: 1.5;">
+                <template v-if="uploadForm.globalTestType === 'opt'">请选取<b>该素材历史被优化版本</b>，以此为参照基准，直观对比优化后素材的投放数据提升效果。</template>
+                <template v-else>默认选取<b>当前渠道市场投放数据最优</b>的素材。</template>
+              </span>
+            </div>
+          </el-form-item>
+
+          <div class="section-title">其他附件</div>
+          <el-form-item label="自定义标签">
+            <el-select v-model="uploadForm.customTag" placeholder="自定义标签" style="width: 100%;">
+              <el-option label="标签1" value="1"></el-option>
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="视频文件" required>
+            <el-upload
+              class="upload-demo"
+              drag
+              action="#"
+              multiple>
+              <i class="el-icon-upload"></i>
+              <div class="el-upload__text">将文件拖到此处，或 <em>点击上传</em></div>
+            </el-upload>
+          </el-form-item>
+
+          <el-form-item label="批次名称" required>
+            <el-input 
+              v-model="uploadForm.batchName" 
+              placeholder="请输入批次名称" 
+              @input="isBatchNameModified = true"
+              clearable>
+            </el-input>
+          </el-form-item>
+        </el-form>
+        
+        <div class="footer-actions">
+          <el-button type="primary" @click="handleSubmit" size="medium">上传</el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vue and Element UI JS -->
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+      new Vue({
+        el: '#app',
+        data() {
+          return {
+            productOptions: [
+              'Chopin05G', 'Chopin06G', 'Chopin03G', 'Tile01G', 'Tile02G', 
+              'Tile01A', 'Chopin06A', 'Chopin05A', 'Chopin03A', 'BiblePuzzle01G', 
+              'BiblePuzzle01A', 'Chopin01G', 'Chopin01A', 'Chopin02G', 'Triple02G', 
+              'Tile03G', 'Merge01G'
+            ],
+            packOptions: ['素材包_20260101_A', '素材包_20260101_B', '素材包_20260102_C', '素材包_20260103_D'],
+            benchmarkOptions: [
+              '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude1_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PingShiWanFa_RS-P1X1R3C2M3_LJ-aurum-Jude1.mp4',
+              '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude2_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude2.mp4',
+              '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude3_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude3.mp4',
+              '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude4_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude4.mp4'
+            ],
+            uploadForm: {
+              globalTestType: 'opt',
+              globalBenchmark: '',
+              selectedProducts: ['Tile01A', 'Tile01G'],
+              media: ['Facebook', 'AppLovin', 'Adwords'],
+              packType: 'none',
+              selectedPacks: [],
+              mediaSettings: {},
+              customTag: '',
+              batchName: ''
+            },
+            isBatchNameModified: false,
+            refreshKey: 0
+          };
+        },
+        computed: {
+          tableWidth() {
+            // 所有列宽现在统一为 300px，产品列 120px
+            return (120 + this.uploadForm.media.length * 300) + 'px';
+          }
+        },
+        watch: {
+          'uploadForm.globalTestType': 'generateDefaultBatchName',
+          'uploadForm.selectedProducts': 'generateDefaultBatchName',
+          'uploadForm.media': 'generateDefaultBatchName',
+        },
+        created() {
+          const medias = ['Facebook', 'AppLovin', 'Adwords', 'Tiktok', 'Unity'];
+          this.productOptions.forEach(p => {
+            this.$set(this.uploadForm.mediaSettings, p, {});
+            medias.forEach(m => {
+              this.$set(this.uploadForm.mediaSettings[p], m, {
+                isTesting: 'yes',
+                selectedPacks: []
+              });
+            });
+          });
+          this.generateDefaultBatchName();
+        },
+        methods: {
+          generateDefaultBatchName() {
+            if (this.isBatchNameModified) return;
+
+            const now = new Date();
+            const year = String(now.getFullYear()).slice(-2);
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${year}${month}${day}`;
+
+            const products = (this.uploadForm.selectedProducts || []).join('_');
+            const medias = (this.uploadForm.media || []).join('_');
+            const testType = this.uploadForm.globalTestType === 'opt' ? '老素材优化' : '新方向';
+
+            this.uploadForm.batchName = `${dateStr}_${products}_${medias}_${testType}`;
+          },
+          goBack() {
+            window.parent.postMessage({ type: 'boss_navigate', route: 'overseas-video' }, '*');
+          },
+          handleSubmit() {
+            this.$message.success('上传成功！');
+            setTimeout(() => {
+              this.goBack();
+            }, 1000);
+          },
+          applyToAllProducts(m) {
+            if (this.uploadForm.selectedProducts.length <= 1) return;
+            const firstProd = this.uploadForm.selectedProducts[0];
+            const sourceConfig = this.uploadForm.mediaSettings[firstProd][m];
+            this.uploadForm.selectedProducts.slice(1).forEach(prod => {
+              const targetConfig = this.uploadForm.mediaSettings[prod][m];
+              targetConfig.isTesting = sourceConfig.isTesting;
+              targetConfig.selectedPacks = [...sourceConfig.selectedPacks];
+            });
+            this.$message.success(`已同步至全部已选产品`);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

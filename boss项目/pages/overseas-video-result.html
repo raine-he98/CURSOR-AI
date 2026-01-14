@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>场景化素材测试 - 素材测试结果</title>
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+      html, body { height: 100%; margin: 0; background: #f0f2f5; font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif; }
+      #app { padding: 20px; box-sizing: border-box; }
+      .result-container { 
+        background: #fff; 
+        padding: 20px; 
+        border-radius: 8px; 
+        box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+        min-height: calc(100vh - 40px);
+        display: flex;
+        flex-direction: column;
+      }
+      .header-actions {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .screenshot-wrapper {
+        flex: 1;
+        border: 1px solid #ebeef5;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #fafafa;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      .screenshot-img {
+        max-width: 100%;
+        height: auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      }
+      .page-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #303133;
+      }
+      /* 模块标题样式 */
+      .section-title {
+        font-size: 15px;
+        font-weight: bold;
+        color: #303133;
+        margin: 0 0 20px 0;
+        display: flex;
+        align-items: center;
+      }
+      .section-title::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 16px;
+        background: #409EFF;
+        margin-right: 8px;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="result-container">
+        <!-- 标题 -->
+        <div class="section-title">素材测试数据详情</div>
+        
+        <!-- 截图展示区域 -->
+        <div class="screenshot-wrapper">
+          <img src="../assets/test-result-screenshot.png" alt="素材测试结果截图" class="screenshot-img">
+        </div>
+      </div>
+    </div>
+    <!-- Vue and Element UI JS -->
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+      new Vue({
+        el: '#app'
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>场景化素材测试 - 海外自动搭建</title>
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+      html, body { height: 100%; margin: 0; background: transparent; font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif; }
+      #app { padding: 16px; background: #fff; min-height: 100%; box-sizing: border-box; }
+      
+      .filter-container { 
+        margin-top: 0;
+        padding: 0; 
+        border-radius: 4px; 
+        background: transparent;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+      .el-form-item--mini.el-form-item { margin-bottom: 0; }
+      
+      .tabs-container {
+        margin-bottom: -1px;
+      }
+      .el-tabs__header {
+        margin-bottom: 0;
+      }
+      .el-tabs--card > .el-tabs__header .el-tabs__nav {
+        border-radius: 4px 4px 0 0;
+      }
+
+      .action-bar {
+        margin: 15px 0;
+      }
+
+      /* 模板模块样式 */
+      .module-section {
+        margin-bottom: 30px;
+        border: 1px solid #ebeef5;
+        border-radius: 8px;
+        padding: 20px;
+        background: #fafafa;
+      }
+      .module-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #303133;
+      }
+      .template-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 20px;
+      }
+      .template-container {
+        position: relative;
+        transition: max-height 0.3s ease;
+        overflow: hidden;
+      }
+      .template-container.is-collapsed {
+        max-height: 155px; /* 默认展示一排高度 */
+        overflow: hidden;
+      }
+      .template-container.is-expanded {
+        max-height: 310px; /* 点击展开展示两排高度 */
+        overflow-y: auto;
+      }
+      .template-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid #ebeef5;
+      }
+      .template-count {
+        font-size: 12px;
+        color: #909399;
+      }
+      .expand-trigger {
+        margin-top: 0;
+        border-top: none;
+        padding-top: 0;
+      }
+      .template-card {
+        background: #fff;
+        border: 1px solid #e4e7ed;
+        border-radius: 6px;
+        padding: 12px;
+        transition: all 0.3s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 140px;
+      }
+      .template-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+      }
+      .template-name {
+        font-size: 13px;
+        font-weight: bold;
+        color: #303133;
+        margin-bottom: 8px;
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .template-info {
+        font-size: 11px;
+        color: #606266;
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+      .info-item {
+        margin-bottom: 2px;
+        padding: 2px 0;
+        border-bottom: 1px dashed #f0f2f5;
+      }
+      .info-val { font-weight: 500; color: #606266; }
+      .template-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .el-table { font-size: 12px; }
+      
+      .op-link {
+        color: #409EFF;
+        cursor: pointer;
+        margin-right: 8px;
+        font-size: 12px;
+      }
+      .op-link.delete { color: #F56C6C; }
+      .log-link {
+        color: #409EFF;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      
+      /* 自定义开关样式微调 */
+      .el-switch.is-checked .el-switch__core {
+        background-color: #409EFF;
+        border-color: #409EFF;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- 平台切换页签 -->
+      <div class="tabs-container">
+        <el-tabs v-model="activeTab" type="card">
+          <el-tab-pane label="Facebook" name="Facebook"></el-tab-pane>
+          <el-tab-pane label="Adwords" name="Adwords"></el-tab-pane>
+          <el-tab-pane label="Tiktok" name="Tiktok"></el-tab-pane>
+          <el-tab-pane label="AppLovin" name="AppLovin"></el-tab-pane>
+          <el-tab-pane label="Unity" name="Unity"></el-tab-pane>
+        </el-tabs>
+      </div>
+
+      <!-- 海外自动搭建模板模块 -->
+      <section class="module-section" style="margin-top: 20px;">
+        <div class="module-title">
+          <span>海外自动搭建模板</span>
+          <el-button v-if="role === 'overseas-optimizer-lead'" type="primary" size="mini" icon="el-icon-plus">创建模板</el-button>
+        </div>
+        <div class="template-container" :class="isTemplatesExpanded ? 'is-expanded' : 'is-collapsed'">
+          <div class="template-grid">
+            <div v-for="temp in templates" :key="temp.id" class="template-card">
+              <div>
+                <div class="template-name">{{ temp.name }}</div>
+                <div class="template-info">
+                  <div class="info-item"><span class="info-val">{{ temp.target }}</span></div>
+                  <div class="info-item"><span class="info-val">{{ temp.optimizeGoal }}</span></div>
+                  <div class="info-item"><span class="info-val">{{ temp.budgetType }}: {{ temp.budgetValue }}$</span></div>
+                </div>
+              </div>
+              <div class="template-actions">
+                <!-- 素材师、优化师角色：仅显示应用按钮 -->
+                <template v-if="role === 'overseas-creative' || role === 'overseas-optimizer'">
+                  <el-button type="primary" size="mini" plain @click="$message.success('已应用模板')">应用</el-button>
+                </template>
+
+                <!-- 优化师组长/管理员角色：显示应用文字按钮+三个图标按钮 -->
+                <template v-else-if="role === 'overseas-optimizer-lead' || role === 'sys-admin'">
+                  <el-button type="primary" size="mini" plain @click="$message.success('已应用模板')">应用</el-button>
+                  <el-tooltip content="编辑" placement="top">
+                    <el-button type="info" size="mini" plain icon="el-icon-edit" circle @click="$message('进入编辑表单')"></el-button>
+                  </el-tooltip>
+                  <el-tooltip content="操作记录" placement="top" v-if="role === 'sys-admin'">
+                    <el-button type="warning" size="mini" plain icon="el-icon-time" circle @click="$message('查看操作历史')"></el-button>
+                  </el-tooltip>
+                  <el-popconfirm
+                    title="确定要删除该模板吗？"
+                    @confirm="confirmDeleteTemplate(temp.id)"
+                    icon="el-icon-info"
+                    icon-color="red">
+                    <el-tooltip slot="reference" content="删除" placement="top">
+                      <el-button type="danger" size="mini" plain icon="el-icon-delete" circle style="margin-left: 0;"></el-button>
+                    </el-tooltip>
+                  </el-popconfirm>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="template-footer">
+          <div class="template-count">共 {{ templates.length }} 条</div>
+          <div class="expand-trigger" v-if="templates.length > 5">
+            <el-button type="text" size="mini" @click="isTemplatesExpanded = !isTemplatesExpanded">
+              {{ isTemplatesExpanded ? '收起' : '展开更多模板' }}
+              <i :class="isTemplatesExpanded ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>
+            </el-button>
+          </div>
+          <div style="width: 60px;"></div> <!-- 占位平衡 -->
+        </div>
+      </section>
+
+      <!-- 海外自动搭建列表模块 -->
+      <section class="module-section">
+        <div class="module-title">海外自动搭建列表</div>
+        
+        <!-- 筛选区域 -->
+        <el-form :inline="true" :model="filters" size="mini" class="filter-container" style="margin-bottom: 15px;">
+          <el-form-item label="创建人">
+            <el-select v-model="filters.creator" placeholder="请选择创建人" style="width: 130px;">
+              <el-option label="alexis" value="alexis"></el-option>
+              <el-option label="yuna" value="yuna"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="应用产品">
+            <el-select v-model="filters.product" placeholder="请选择应用产品" style="width: 130px;">
+              <el-option label="Tile01G" value="Tile01G"></el-option>
+              <el-option label="Tile01A" value="Tile01A"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="应用账户">
+            <el-select v-model="filters.account" placeholder="请选择应用账户" style="width: 180px;">
+              <el-option label="5558426450939798" value="1"></el-option>
+              <el-option label="376533818703572" value="2"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" icon="el-icon-search">查询</el-button>
+          </el-form-item>
+        </el-form>
+
+        <!-- 操作按钮栏 -->
+        <div class="action-bar">
+          <el-button v-if="role === 'overseas-optimizer-lead' || role === 'sys-admin'" type="primary" size="mini">新建规则</el-button>
+        </div>
+
+        <!-- 表格区域 -->
+        <el-table :data="tableData" border stripe size="mini" style="width: 100%" :header-cell-style="{background:'#f5f7fa', color:'#606266'}">
+          <el-table-column type="selection" width="40"></el-table-column>
+          <el-table-column label="开关" width="100" align="center">
+            <template slot-scope="scope">
+              <el-switch v-model="scope.row.enabled" size="mini"></el-switch>
+            </template>
+          </el-table-column>
+          <el-table-column label="规则名称" min-width="350">
+            <template slot-scope="scope">
+              <div style="white-space: normal; line-height: 1.5;">{{ scope.row.ruleName }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="产品名称" width="100">
+            <template slot-scope="scope">{{ scope.row.productName }}</template>
+          </el-table-column>
+          <el-table-column label="应用账户" width="160">
+            <template slot-scope="scope">{{ scope.row.account }}</template>
+          </el-table-column>
+          <el-table-column label="规则类型" width="100">
+            <template slot-scope="scope">{{ scope.row.ruleType }}</template>
+          </el-table-column>
+          <el-table-column label="素材来源" width="100">
+            <template slot-scope="scope">{{ scope.row.source }}</template>
+          </el-table-column>
+          <el-table-column label="优化目标" width="120">
+            <template slot-scope="scope">{{ scope.row.goal }}</template>
+          </el-table-column>
+          <el-table-column label="预算" width="140">
+            <template slot-scope="scope">
+              <div style="font-size: 11px;">{{ scope.row.budgetType }}</div>
+              <div style="font-weight: bold;">Budget:{{ scope.row.budgetValue }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="创建人" width="80">
+            <template slot-scope="scope">{{ scope.row.creator }}</template>
+          </el-table-column>
+          <el-table-column label="状态" width="80">
+            <template slot-scope="scope">
+              <span style="color: #67C23A;">{{ scope.row.status }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="最近执行时间" width="150">
+            <template slot-scope="scope">{{ scope.row.lastRun }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="150">
+            <template slot-scope="scope">
+              <span class="op-link">查看</span>
+              <span class="op-link">编辑</span>
+              <span class="op-link delete">删除</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="搭建日志" width="100">
+            <template slot-scope="scope">
+              <span class="log-link">查看详情</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </section>
+    </div>
+
+    <!-- Vue and Element UI JS -->
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+      new Vue({
+        el: '#app',
+        data() {
+          return {
+            role: 'overseas-creative',
+            activeTab: 'Facebook',
+            isTemplatesExpanded: false,
+            filters: {
+              creator: '',
+              product: '',
+              account: ''
+            },
+            templates: [
+              { id: 1, name: '1.0-标准自动化模板', target: '应用推广', optimizeGoal: 'APP_INSTALLS', budgetType: 'Campaign Daily', budgetValue: '100' },
+              { id: 2, name: 'ROI-高回报优化模板', target: '销量', optimizeGoal: 'VALUE', budgetType: 'Adset Daily', budgetValue: '200' },
+              { id: 3, name: 'CPI-低成本拉新模板', target: '应用推广', optimizeGoal: 'APP_INSTALLS', budgetType: 'Campaign Lifetime', budgetValue: '1000' },
+              { id: 4, name: '周末加速覆盖模板', target: '应用推广', optimizeGoal: 'OFFSITE_CONVERSIONS', budgetType: 'Adset Daily', budgetValue: '50' },
+              { id: 5, name: '节日大促特别模板', target: '销量', optimizeGoal: 'VALUE', budgetType: 'Campaign Daily', budgetValue: '500' },
+              { id: 6, name: '新用户专项模板', target: '应用推广', optimizeGoal: 'APP_INSTALLS', budgetType: 'Adset Lifetime', budgetValue: '300' },
+              { id: 7, name: '老用户唤醒模板', target: '应用推广', optimizeGoal: 'OFFSITE_CONVERSIONS', budgetType: 'Campaign Daily', budgetValue: '150' },
+              { id: 8, name: '高价值用户筛选模板', target: '销量', optimizeGoal: 'VALUE', budgetType: 'Adset Daily', budgetValue: '400' },
+              { id: 9, name: '素材A/B测试专用模板', target: '应用推广', optimizeGoal: 'APP_INSTALLS', budgetType: 'Campaign Daily', budgetValue: '80' },
+              { id: 10, name: '全球覆盖加速模板', target: '应用推广', optimizeGoal: 'OFFSITE_CONVERSIONS', budgetType: 'Campaign Lifetime', budgetValue: '2000' },
+              { id: 11, name: '东南亚专项测试模板', target: '应用推广', optimizeGoal: 'APP_INSTALLS', budgetType: 'Adset Daily', budgetValue: '30' },
+              { id: 12, name: '欧美高ARPU模板', target: '销量', optimizeGoal: 'VALUE', budgetType: 'Campaign Daily', budgetValue: '1000' },
+              { id: 13, name: '拉美地区放量模板', target: '应用推广', optimizeGoal: 'APP_INSTALLS', budgetType: 'Adset Lifetime', budgetValue: '500' },
+              { id: 14, name: '中东地区投放模板', target: '应用推广', optimizeGoal: 'OFFSITE_CONVERSIONS', budgetType: 'Campaign Daily', budgetValue: '300' },
+              { id: 15, name: '日本二次元专项模板', target: '销量', optimizeGoal: 'VALUE', budgetType: 'Adset Daily', budgetValue: '600' },
+              { id: 16, name: '韩国MMO专项模板', target: '销量', optimizeGoal: 'VALUE', budgetType: 'Campaign Daily', budgetValue: '800' },
+              { id: 17, name: '返场活动拉活模板', target: '应用推广', optimizeGoal: 'OFFSITE_CONVERSIONS', budgetType: 'Adset Daily', budgetValue: '120' },
+              { id: 18, name: '沉默用户激活模板', target: '应用推广', optimizeGoal: 'APP_INSTALLS', budgetType: 'Campaign Lifetime', budgetValue: '1500' },
+              { id: 19, name: '大R用户留存模板', target: '销量', optimizeGoal: 'VALUE', budgetType: 'Adset Daily', budgetValue: '1000' },
+              { id: 20, name: '新手保护期放量模板', target: '应用推广', optimizeGoal: 'APP_INSTALLS', budgetType: 'Campaign Daily', budgetValue: '200' }
+            ],
+            tableData: [
+              {
+                enabled: true,
+                ruleName: 'Adw专用——1.0测试——不管CPI',
+                productName: 'Tile01G',
+                account: '5558426450939798',
+                ruleType: '新建广告',
+                source: '素材包管理',
+                goal: 'APP_INSTALLS',
+                budgetType: 'Campaign Daily',
+                budgetValue: '3',
+                creator: 'alexis',
+                status: '生效中',
+                lastRun: '2026-01-02 18:30:15'
+              },
+              {
+                enabled: true,
+                ruleName: 'CO_HBG全自动_1.0设计师搭建_Tile01G_story_Install_32账户_$3_yuna',
+                productName: 'Tile01G',
+                account: '5558426450939798',
+                ruleType: '新建广告',
+                source: '素材包管理',
+                goal: 'APP_INSTALLS',
+                budgetType: 'Campaign Daily',
+                budgetValue: '3',
+                creator: 'yuna',
+                status: '生效中',
+                lastRun: '2026-01-02 18:15:21'
+              },
+              {
+                enabled: true,
+                ruleName: 'CO_HBG全自动_1.0yuna_Tile01G_story_Install_32账户_$3_rzpicfb-top',
+                productName: 'Tile01G',
+                account: '376533818703572',
+                ruleType: '新建广告',
+                source: '图片管理',
+                goal: 'APP_INSTALLS',
+                budgetType: 'Campaign Daily',
+                budgetValue: '100',
+                creator: 'yuna',
+                status: '生效中',
+                lastRun: '2025-12-31 17:56:02'
+              },
+              {
+                enabled: true,
+                ruleName: 'install循环自动搭建_【标杆CO】_Tile01G_5$',
+                productName: 'Tile01G',
+                account: '5558426450939798',
+                ruleType: '新建广告',
+                source: '素材包管理',
+                goal: 'APP_INSTALLS',
+                budgetType: 'Campaign Daily',
+                budgetValue: '5',
+                creator: 'alexis',
+                status: '生效中',
+                lastRun: '2025-12-29 17:00:22'
+              },
+              {
+                enabled: true,
+                ruleName: 'TEXTInstall循环自动搭建_【标杆PH】_Tile01G_8$',
+                productName: 'Tile01G',
+                account: '1377421610011988',
+                ruleType: '新建广告',
+                source: '素材包管理',
+                goal: 'APP_INSTALLS',
+                budgetType: 'Campaign Daily',
+                budgetValue: '8',
+                creator: 'Yunhong tan',
+                status: '生效中',
+                lastRun: '2025-12-29 17:00:24'
+              },
+              {
+                enabled: true,
+                ruleName: 'Tile01A_VO_AAA_US-手动-57',
+                productName: 'Tile01A',
+                account: '1811309140259354',
+                ruleType: '新建广告',
+                source: '成片管理',
+                goal: 'VALUE',
+                budgetType: 'Adset Daily',
+                budgetValue: '500',
+                creator: 'alia',
+                status: '生效中',
+                lastRun: '2025-12-19 11:16:56'
+              }
+            ]
+          };
+        },
+        mounted() {
+          this.initRole();
+          window.addEventListener('storage', this.handleStorageChange);
+          window.addEventListener('boss_role_change', (e) => {
+            this.role = e.detail;
+          });
+        },
+        methods: {
+          initRole() {
+            try {
+              this.role = localStorage.getItem("boss_demo_role") || 'overseas-creative';
+            } catch(e) {
+              this.role = 'overseas-creative';
+            }
+          },
+          handleStorageChange(e) {
+            if (e.key === 'boss_demo_role' || e.key === 'boss_demo_role_trigger') {
+              try {
+                this.role = localStorage.getItem("boss_demo_role") || 'overseas-creative';
+              } catch(e) {}
+            }
+          },
+          confirmDeleteTemplate(id) {
+            this.templates = this.templates.filter(t => t.id !== id);
+            this.$message({ type: 'success', message: '删除成功!' });
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>场景化素材测试</title>
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="topbar">
+        <div class="topbar__left">
+          <button class="hamburger" id="hamburgerBtn" type="button" aria-label="展开/收起菜单">
+            <span class="hamburger__icon" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </span>
+            <span class="hamburger__text">Hamburger</span>
+          </button>
+
+          <div class="version-toggle">
+            <div class="version-toggle__pill is-functional" :class="{ 'is-active': !isScenario }">功能版</div>
+            <el-switch
+              v-model="isScenario"
+              active-color="#67C23A"
+              inactive-color="#409EFF">
+            </el-switch>
+            <div class="version-toggle__pill is-scenario" :class="{ 'is-active': isScenario }">场景版</div>
+            
+            <el-select v-if="isScenario" v-model="testOption" size="mini" style="width: 80px; margin-left: 5px;">
+              <el-option label="测1" value="test1"></el-option>
+            </el-select>
+          </div>
+        </div>
+
+        <div class="topbar__right">
+          <div class="top-controls" aria-label="顶部筛选">
+            <el-select size="mini" v-model="system" style="width: 100px;">
+              <el-option label="系统" value="system"></el-option>
+            </el-select>
+
+            <el-select size="mini" v-model="scope" style="width: 100px;">
+              <el-option label="全部" value="all"></el-option>
+            </el-select>
+
+            <el-select size="mini" v-model="role" id="roleSelectUI" @change="handleRoleChange" style="width: 160px;">
+              <el-option label="系统超级管理员" value="sys-admin"></el-option>
+              <el-option label="海外优化师" value="overseas-optimizer"></el-option>
+              <el-option label="海外优化师组长" value="overseas-optimizer-lead"></el-option>
+              <el-option label="海外素材师" value="overseas-creative"></el-option>
+            </el-select>
+
+            <div class="top-user">
+              <el-dropdown trigger="click" size="small">
+                <span class="el-dropdown-link top-user__btn">
+                  <span class="top-user__icon">🌐</span>
+                  <span class="top-user__name">xiaoyu.he</span>
+                  <i class="el-icon-arrow-down el-icon--right"></i>
+                </span>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item>个人中心</el-dropdown-item>
+                  <el-dropdown-item divider></el-dropdown-item>
+                  <el-dropdown-item>退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="main">
+        <aside class="sidebar">
+          <el-menu
+            :default-active="getMenuActive()"
+            class="el-menu-vertical-demo"
+            @select="handleMenuSelect"
+            background-color="transparent"
+            text-color="rgba(17, 24, 39, 0.62)"
+            active-text-color="#2563eb">
+            <el-submenu index="overseas-test-management">
+              <template slot="title">
+                <i class="el-icon-s-operation"></i>
+                <span>海外测试管理</span>
+              </template>
+              <el-menu-item index="overseas-video-upload">
+                <i class="el-icon-upload"></i>
+                <span slot="title">素材批量上传</span>
+              </el-menu-item>
+              <el-menu-item index="overseas-video">
+                <i class="el-icon-video-camera"></i>
+                <span slot="title">素材测试跟踪</span>
+              </el-menu-item>
+              <el-menu-item index="overseas-video-result">
+                <i class="el-icon-data-analysis"></i>
+                <span slot="title">素材测试结果</span>
+              </el-menu-item>
+            </el-submenu>
+            <el-submenu index="overseas-auto-build-management">
+              <template slot="title">
+                <i class="el-icon-setting"></i>
+                <span>海外自动搭建</span>
+              </template>
+              <el-menu-item index="overseas-auto-build">
+                <i class="el-icon-s-order"></i>
+                <span slot="title">海外测试规则</span>
+              </el-menu-item>
+              <el-menu-item index="overseas-material-pack">
+                <i class="el-icon-collection"></i>
+                <span slot="title">海外素材包</span>
+              </el-menu-item>
+            </el-submenu>
+            <!-- 暂时隐藏以下菜单，后续可能恢复 -->
+            <!--
+            <el-menu-item index="overseas-material-pack">
+              <i class="el-icon-collection"></i>
+              <span slot="title">海外素材包管理</span>
+            </el-menu-item>
+            <el-menu-item index="overseas-asset">
+              <i class="el-icon-bank-card"></i>
+              <span slot="title">海外资产管理</span>
+            </el-menu-item>
+            <el-menu-item index="bi-material">
+              <i class="el-icon-pie-chart"></i>
+              <span slot="title">素材相关BI看板</span>
+            </el-menu-item>
+            <el-menu-item index="bi-product">
+              <i class="el-icon-data-line"></i>
+              <span slot="title">产品相关BI看板</span>
+            </el-menu-item>
+            -->
+          </el-menu>
+        </aside>
+
+        <section class="content">
+          <div class="content__header">
+            <div class="content__title">{{ activeTitle }}</div>
+          </div>
+          <div class="content__body" id="contentBody">
+            <div class="skeleton" id="skeleton" v-show="!isReady">
+              <div class="skeleton__line"></div>
+              <div class="skeleton__line"></div>
+              <div class="skeleton__line"></div>
+            </div>
+
+            <div class="page-host" :class="{'is-ready': isReady}">
+              <iframe
+                v-for="(val, key) in routes"
+                :key="key"
+                class="page-frame"
+                :class="{'is-active': activeRoute === key}"
+                :src="getIframeSrc(val, key)"
+                @load="handleFrameLoad(key)"
+              ></iframe>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Vue and Element UI JS -->
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="./assets/app.js" defer></script>
+  </body>
+</html>
+
+

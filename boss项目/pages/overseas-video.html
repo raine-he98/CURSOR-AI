@@ -1,0 +1,1208 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>场景化素材测试 - 海外成片管理</title>
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+      html, body { height: 100%; margin: 0; background: transparent; font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif; }
+      #app { padding: 16px; background: #fff; min-height: 100%; box-sizing: border-box; }
+      .filter-container { margin-bottom: 20px; border: 1px solid #ebeef5; padding: 15px; border-radius: 4px; background: #fafafa; }
+      .el-form-item--mini.el-form-item { margin-bottom: 12px; margin-right: 15px; }
+      .el-table { font-size: 12px; }
+      .thumb-placeholder {
+        width: 96px; height: 72px; border-radius: 6px; background: #f5f7fa; border: 1px solid #e4e7ed;
+        display: flex; align-items: center; justify-content: center; position: relative;
+      }
+      .thumb-placeholder::after { content: '▶'; color: #909399; font-size: 14px; }
+      .tag-row { margin-bottom: 4px; display: flex; align-items: flex-start; }
+      .tag-label { min-width: 50px; font-size: 11px; color: #909399; margin-top: 2px; flex-shrink: 0; }
+      .tags-wrapper { display: flex; flex-wrap: wrap; flex: 1; }
+      .el-tag--mini { height: 18px; line-height: 16px; padding: 0 4px; margin-right: 2px; margin-bottom: 2px; }
+      .metrics-box { font-size: 11px; color: #606266; line-height: 1.6; }
+      .metrics-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #ebeef5; }
+      .metrics-val { color: #303133; font-weight: bold; }
+      
+      /* 修改配置抽屉内的表格样式 */
+      .test-config-container {
+        width: 100%;
+        overflow-x: auto;
+        margin-top: 10px;
+        border: 1px solid #ebeef5;
+        border-radius: 8px;
+      }
+      .test-config-table.el-table {
+        table-layout: fixed !important;
+      }
+      .test-config-table .cell {
+        white-space: nowrap !important;
+        padding: 10px 15px !important;
+      }
+      .test-config-table .el-table__header, .test-config-table .el-table__body {
+        width: 100% !important;
+      }
+
+      .name-cell, .test-type-cell { 
+        line-height: 1.4; 
+        word-break: break-all; 
+        position: relative;
+        padding-bottom: 15px; /* 为右下角图标留出空间 */
+        min-height: 40px;
+      }
+      .name-text, .test-type-text { 
+        color: #303133; 
+        font-weight: 500; 
+        font-size: 12px;
+      }
+      .edit-icon {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        color: #409EFF;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .popover-title {
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 15px;
+        color: #303133;
+        border-bottom: 1px solid #ebeef5;
+        padding-bottom: 10px;
+      }
+      .hidden { display: none !important; }
+      
+      /* 抽屉样式 */
+      .drawer-content {
+        padding: 20px 30px;
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .drawer-footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 15px 30px;
+        background: #fff;
+        border-top: 1px solid #ebeef5;
+        text-align: right;
+        z-index: 10;
+      }
+      .el-drawer__header {
+        margin-bottom: 0;
+        padding: 20px 30px 10px;
+        font-weight: bold;
+        color: #303133;
+      }
+      .upload-demo .el-upload-dragger {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <el-alert
+        title="温馨提示：请确保上传素材在同一批次里面：1. 目标产品一致 2. 目标媒体一致 3. 测试类型相同"
+        type="warning"
+        show-icon
+        :closable="false"
+        style="margin-bottom: 20px;">
+      </el-alert>
+
+      <!-- 筛选区域 -->
+      <el-form :inline="true" :model="filters" size="mini" class="filter-container" label-width="110px">
+        <el-form-item label="产品">
+          <el-select v-model="filters.product" placeholder="产品名称" style="width: 140px;">
+            <el-option label="产品名称" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="上传人">
+          <el-select v-model="filters.uploader" placeholder="上传人" style="width: 140px;">
+            <el-option label="上传人" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="上传时间">
+          <el-date-picker v-model="filters.dateRange" type="daterange" range-separator="-" start-placeholder="开始" end-placeholder="结束" style="width: 200px;"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="自定义标签">
+          <el-select v-model="filters.customTagOp" style="width: 80px;">
+            <el-option label="包含" value="contain"></el-option>
+          </el-select>
+          <el-select v-model="filters.customTag" placeholder="自定义标签" style="width: 120px; margin-left: 5px;">
+            <el-option label="标签1" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="标签">
+          <el-input v-model="filters.tag" placeholder="请输入标签" style="width: 140px;"></el-input>
+        </el-form-item>
+        <el-form-item label="素材师">
+          <el-input v-model="filters.materialist" placeholder="请输入素材师" style="width: 140px;"></el-input>
+        </el-form-item>
+        <el-form-item label="命名规范">
+          <el-select v-model="filters.naming" placeholder="请选择" style="width: 140px;">
+            <el-option label="符合" value="1"></el-option>
+            <el-option label="不符合" value="0"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="媒体">
+          <el-select v-model="filters.media" placeholder="请选择" style="width: 140px;">
+            <el-option label="FB" value="FB"></el-option>
+            <el-option label="GG" value="GG"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="素材推送状态">
+          <el-select v-model="filters.pushStatus" placeholder="请选择" style="width: 140px;">
+            <el-option label="已推送" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="素材搭建状态">
+          <el-select v-model="filters.buildStatus" placeholder="请选择" style="width: 140px;">
+            <el-option label="已搭建" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="素材扩展状态">
+          <el-select v-model="filters.extStatus" placeholder="请选择" style="width: 140px;">
+            <el-option label="已扩展" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="片段管理状态">
+          <el-select v-model="filters.segmentStatus" placeholder="请选择" style="width: 140px;">
+            <el-option label="正常" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="成片md5">
+          <el-input v-model="filters.md5" placeholder="请输入md5" style="width: 140px;"></el-input>
+        </el-form-item>
+        <el-form-item label="素材包">
+          <el-select v-model="filters.materialPack" placeholder="素材包" style="width: 140px;">
+            <el-option label="素材包1" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="风控打分状态">
+          <el-select v-model="filters.riskStatus" placeholder="请选择" style="width: 140px;">
+            <el-option label="已打分" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="渠道适用性">
+          <el-select v-model="filters.channelLimit" placeholder="请选择" style="width: 140px;">
+            <el-option label="无限制" value="0"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Campaign管控">
+          <el-select v-model="filters.campaignControl" placeholder="请选择" style="width: 140px;">
+            <el-option label="管控" value="1"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="素材尺寸">
+          <el-select v-model="filters.size" placeholder="请选择" style="width: 140px;">
+            <el-option label="9:16" value="9:16"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="成片名称" style="display: block;">
+          <el-input 
+            type="textarea" 
+            :autosize="{ minRows: 1, maxRows: 5 }" 
+            v-model="filters.name" 
+            placeholder="请输入成片名称" 
+            style="width: 600px;">
+          </el-input>
+        </el-form-item>
+        <div style="text-align: right; margin-top: -40px;">
+          <el-button type="primary" icon="el-icon-search">筛选</el-button>
+          <el-button icon="el-icon-refresh">重置</el-button>
+        </div>
+      </el-form>
+
+      <!-- 操作栏 -->
+      <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 10px;">
+          <el-button type="primary" size="mini" icon="el-icon-s-operation" :disabled="selectedRows.length === 0">手动搭建</el-button>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <el-button type="primary" size="mini" icon="el-icon-download" plain>导出</el-button>
+          <el-dropdown trigger="click" :disabled="selectedRows.length === 0">
+            <el-button size="mini" :disabled="selectedRows.length === 0">
+              批量修改<i class="el-icon-arrow-down el-icon--right"></i>
+            </el-button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item>批量修改</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+          <el-button size="mini" disabled>自定义列</el-button>
+        </div>
+      </div>
+
+      <!-- 表格区域 -->
+      <el-table :data="filteredTableData" border stripe size="mini" style="width: 100%" :header-cell-style="{background:'#f5f7fa', color:'#606266'}" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="40" :selectable="checkSelectable"></el-table-column>
+        <el-table-column label="视频" width="110">
+          <template slot-scope="scope">
+            <div class="thumb-placeholder"></div>
+          </template>
+        </el-table-column>
+        <el-table-column label="成片名称" min-width="250">
+          <template slot-scope="scope">
+            <div class="name-cell">
+              <div class="name-text">
+                {{ scope.row.name }}{{ scope.row.filename }}
+              </div>
+              <i class="el-icon-edit edit-icon"></i>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="产品 (目标媒体)" width="220">
+          <template slot-scope="scope">
+            <div v-for="item in scope.row.products" :key="item.label" class="tag-row">
+              <span class="tag-label">{{ item.label }}</span>
+              <div class="tags-wrapper">
+                <el-tag v-for="tag in item.tags" :key="tag" size="mini" type="success" effect="plain">{{ tag }}</el-tag>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="测试状态" align="center">
+          <el-table-column label="老素材优化测试" width="180">
+            <template slot-scope="scope">
+              <div v-for="group in filterGroups(scope.row, '老素材优化测试')" :key="group.product" class="tag-row">
+                <span class="tag-label" style="min-width: 45px;">{{ group.product }}</span>
+                <div class="tags-wrapper" style="width: 110px;">
+                  <el-tooltip 
+                    v-for="tag in group.medias" 
+                    :key="tag" 
+                    effect="dark" 
+                    :content="getMediaStatusText(scope.row, group.product, tag)" 
+                    placement="top">
+                    <el-tag 
+                      size="mini" 
+                      :type="getMediaStatusType(scope.row, group.product, tag)" 
+                      effect="plain">
+                      {{ tag }}
+                    </el-tag>
+                  </el-tooltip>
+                </div>
+              </div>
+              <div v-if="filterGroups(scope.row, '老素材优化测试').length === 0" style="color: #C0C4CC; text-align: center;">-</div>
+            </template>
+          </el-table-column>
+          
+          <el-table-column label="新方向测试" width="180">
+            <template slot-scope="scope">
+              <div v-for="group in filterGroups(scope.row, '新方向测试')" :key="group.product" class="tag-row">
+                <span class="tag-label" style="min-width: 45px;">{{ group.product }}</span>
+                <div class="tags-wrapper" style="width: 110px;">
+                  <el-tooltip 
+                    v-for="tag in group.medias" 
+                    :key="tag" 
+                    effect="dark" 
+                    :content="getMediaStatusText(scope.row, group.product, tag)" 
+                    placement="top">
+                    <el-tag 
+                      size="mini" 
+                      :type="getMediaStatusType(scope.row, group.product, tag)" 
+                      effect="plain">
+                      {{ tag }}
+                    </el-tag>
+                  </el-tooltip>
+                </div>
+              </div>
+              <div v-if="filterGroups(scope.row, '新方向测试').length === 0" style="color: #C0C4CC; text-align: center;">-</div>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="不测试" width="150">
+            <template slot-scope="scope">
+              <div v-for="group in filterGroups(scope.row, '不测试')" :key="group.product" class="tag-row">
+                <span class="tag-label" style="min-width: 45px;">{{ group.product }}</span>
+                <div class="tags-wrapper" style="width: 110px;">
+                  <el-tag v-for="tag in group.medias" :key="tag" size="mini" type="info" effect="plain">{{ tag }}</el-tag>
+                </div>
+              </div>
+              <div v-if="scope.row.testType === '不测试' && filterGroups(scope.row, '不测试').length === 0" style="color: #909399; text-align: center;">不测试</div>
+              <div v-else-if="filterGroups(scope.row, '不测试').length === 0" style="color: #C0C4CC; text-align: center;">-</div>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="操作" width="50" align="center">
+            <template slot-scope="scope">
+                <div slot="reference" style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                  <el-tooltip content="测试详情" placement="left" v-if="scope.row.testType !== '不测试'">
+                    <i class="el-icon-data-analysis" style="cursor: pointer; color: #67C23A; font-size: 16px;" @click.stop="openTestDetail(scope.row)"></i>
+                  </el-tooltip>
+                  <el-tooltip content="编辑测试配置" placement="left">
+                    <i class="el-icon-edit" style="cursor: pointer; color: #409EFF; font-size: 14px;" @click.stop="openEditConfig(scope.row)"></i>
+                  </el-tooltip>
+                </div>
+            </template>
+          </el-table-column>
+        </el-table-column>
+        <el-table-column label="标杆管理" width="220">
+          <template slot-scope="scope">
+            <div v-if="scope.row.testType !== '不测试'">
+              <!-- 获取汇总后的单一类型标杆组 -->
+              <div v-if="getAggregatedBenchmarks(scope.row).length > 0" class="tag-row" style="align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; flex: 1;">
+                  <span class="tag-label" style="min-width: 60px; font-weight: bold; color: #606266;">
+                    {{ getAggregatedBenchmarks(scope.row)[0].type }}标杆:
+                  </span>
+                  <div class="tags-wrapper" style="display: flex; flex-wrap: wrap; gap: 4px; flex: 1;">
+                    <el-tooltip v-for="(bench, bIdx) in getAggregatedBenchmarks(scope.row)[0].list" :key="bIdx" effect="dark" :content="bench.fullName" placement="top">
+                      <el-tag size="mini" type="info" style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ bench.name }}
+                      </el-tag>
+                    </el-tooltip>
+                  </div>
+                </div>
+                <!-- 统一的查看按钮 -->
+                <el-button 
+                  type="text" 
+                  size="mini" 
+                  icon="el-icon-search" 
+                  @click="viewAllBenchmarksInRow(scope.row)" 
+                  style="padding: 0; margin-left: 10px; font-size: 14px;"></el-button>
+              </div>
+              <span v-else>-</span>
+            </div>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="视频尺寸" width="120">
+          <template slot-scope="scope">
+            {{ scope.row.size }}<br/>
+            <el-tag size="mini" type="success" effect="plain" v-if="scope.row.expanded">扩展成功 ↙</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="指标" width="140">
+          <template slot-scope="scope">
+            <div class="metrics-box">
+              <div class="metrics-item"><span>素材评价:</span> <span class="metrics-val">-</span></div>
+              <div class="metrics-item"><span>留存:</span> <span class="metrics-val">-</span></div>
+              <div class="metrics-item"><span>1.0CPI:</span> <span class="metrics-val">-</span></div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="风控标签" width="180">
+          <template slot-scope="scope">
+            <div style="font-size: 11px;">
+              方向: {{ scope.row.direction }}<br/>
+              优化点1: {{ scope.row.optimize }}<br/>
+              主题: {{ scope.row.theme }}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="自定义标签" width="180">
+          <template slot-scope="scope">
+            <div style="font-size: 11px;">
+              素材师打分: {{ scope.row.score1 }}<br/>
+              优化师打分: {{ scope.row.score2 }}<br/>
+              <el-button type="primary" size="mini" style="margin-top: 5px; padding: 4px 8px;">Approve</el-button>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="适用性" width="100">
+          <template slot-scope="scope">
+             <el-tag size="mini" type="info" plain>无限制</el-tag><br/>
+             <span style="color: #909399; font-size: 10px;">共0条</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 测试详情抽屉 -->
+      <el-drawer
+        title="测试详情"
+        :visible.sync="testDetailVisible"
+        direction="rtl"
+        size="650px">
+        <div style="padding: 0 20px;">
+          <!-- 1. 测试类型单选 -->
+          <div style="margin-bottom: 15px; padding: 12px; background: #f8f9fb; border-radius: 4px; display: flex; align-items: center;">
+            <span style="font-size: 13px; font-weight: bold; margin-right: 15px; color: #606266;">测试类型:</span>
+            <el-radio-group v-model="activeDetailType" size="mini">
+              <el-radio-button label="opt" :disabled="!hasTestType('老素材优化测试')">老素材优化测试</el-radio-button>
+              <el-radio-button label="new" :disabled="!hasTestType('新方向测试')">新方向测试</el-radio-button>
+            </el-radio-group>
+          </div>
+
+          <!-- 2. 媒体 Tab 页 -->
+          <el-tabs v-model="activeDetailTab">
+            <el-tab-pane 
+              v-for="media in ['Facebook', 'AppLovin', 'Adwords', 'Tiktok', 'Unity']" 
+              :key="media" 
+              :label="media" 
+              :name="getMediaShortName(media)"
+              :disabled="isMediaTabDisabled(media)">
+              
+              <div v-if="filteredDetailProducts.length > 0">
+                <!-- 3. 产品选择 (位于 Tab 下方) -->
+                <div style="margin: 10px 0 15px 0; display: flex; align-items: center;">
+                  <span style="font-size: 12px; color: #909399; margin-right: 10px;">对应产品:</span>
+                  <el-radio-group v-model="activeDetailProduct" size="mini">
+                    <el-radio v-for="p in filteredDetailProducts" :key="p" :label="p">{{ p }}</el-radio>
+                  </el-radio-group>
+                </div>
+
+                <!-- 4. 数据表格 -->
+                <el-table :data="testDetailData[activeDetailType]" size="small" border stripe>
+                  <el-table-column property="status" label="搭建状态" width="100" align="center">
+                    <template slot-scope="scope">
+                      <el-tag :type="scope.row.status === '测试完成' ? 'success' : (scope.row.status === '测试中' ? 'warning' : 'info')" size="mini">
+                        {{ scope.row.status }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column property="rule" label="搭建规则" min-width="180"></el-table-column>
+                  <el-table-column property="time" label="开始日期" width="150"></el-table-column>
+                  <el-table-column label="结束日期" width="150">
+                    <template slot-scope="scope">
+                      <span style="color: #909399;">需要明确概念</span>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+
+              <!-- 无产品时的显示 -->
+              <div v-else style="padding: 40px 0; text-align: center;">
+                <i class="el-icon-info" style="font-size: 24px; color: #C0C4CC; margin-bottom: 10px;"></i>
+                <div style="color: #909399; font-size: 14px;">该媒体未绑定任何产品</div>
+              </div>
+
+            </el-tab-pane>
+          </el-tabs>
+        </div>
+      </el-drawer>
+
+      <!-- 编辑测试配置抽屉 -->
+      <el-drawer
+        title="编辑测试配置"
+        :visible.sync="editConfigVisible"
+        direction="rtl"
+        size="80%">
+        <div style="padding: 0 20px;">
+          <el-form label-width="120px" size="small">
+            <el-form-item label="测试类型" required style="margin-bottom: 20px;">
+              <el-radio-group v-model="editForm.globalTestType" disabled>
+                <el-radio label="opt">老素材优化测试</el-radio>
+                <el-radio label="new">新方向测试</el-radio>
+              </el-radio-group>
+            </el-form-item>
+
+            <el-form-item label="测试配置" required>
+              <div class="test-config-container">
+                <el-table :data="editForm.selectedProducts.map(p => ({ name: p }))" border size="mini" class="test-config-table" :style="{ width: editTableWidth }" :key="editRefreshKey">
+                  <el-table-column label="产品" width="120" prop="name" align="center" fixed></el-table-column>
+                  <el-table-column v-for="m in editForm.media" :key="m" width="200">
+                    <template slot="header" slot-scope="scope">
+                      <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span>{{ m }}</span>
+                        <el-button type="text" size="mini" icon="el-icon-copy-document" @click="applyToAllInEdit(m)" style="padding: 0;">应用至全部</el-button>
+                      </div>
+                    </template>
+                <template slot-scope="scope">
+                  <div v-if="isMediaSupported(scope.row.name, m)">
+                    <div v-if="editForm.mediaSettings[scope.row.name] && editForm.mediaSettings[scope.row.name][m]">
+                      <div style="display: flex; align-items: center; white-space: nowrap; gap: 10px;">
+                        <el-switch 
+                          v-model="editForm.mediaSettings[scope.row.name][m].isTesting" 
+                          active-value="yes" 
+                          inactive-value="no"
+                          active-text="测试"
+                          inactive-text="不测试"
+                          size="mini">
+                        </el-switch>
+                        <el-select 
+                          v-if="editForm.mediaSettings[scope.row.name][m].isTesting === 'yes'"
+                          v-model="editForm.mediaSettings[scope.row.name][m].selectedPacks" 
+                          multiple 
+                          collapse-tags
+                          placeholder="选择素材包" 
+                          size="mini" 
+                          style="width: 150px;">
+                          <el-option v-for="item in packOptions" :key="item" :label="item" :value="item"></el-option>
+                        </el-select>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else style="color: #C0C4CC; text-align: center;">-</div>
+                </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </el-form-item>
+
+            <el-form-item required>
+              <template slot="label">
+                <span>{{ editForm.globalTestType === 'opt' ? '对比标杆' : '跑量标杆' }}</span>
+              </template>
+              <el-select v-model="editForm.globalBenchmark" placeholder="请选择标杆" style="width: 100%;" clearable>
+                <el-option v-for="opt in benchmarkOptions" :key="opt" :label="opt" :value="opt"></el-option>
+              </el-select>
+              <div style="margin-top: 8px; padding: 8px 12px; background-color: #f4f4f5; border-radius: 4px; display: flex; align-items: flex-start; gap: 6px;">
+                <i class="el-icon-info" style="color: #909399; margin-top: 2px;"></i>
+                <span style="color: #606266; font-size: 12px; line-height: 1.5;">
+                  <template v-if="editForm.globalTestType === 'opt'">请选取<b>该素材历史被优化版本</b>，以此为参照基准，直观对比优化后素材的投放数据提升效果。</template>
+                  <template v-else>默认选取<b>当前渠道市场投放数据最优</b>的素材。</template>
+                </span>
+              </div>
+            </el-form-item>
+          </el-form>
+
+          <div style="margin-top: 30px; text-align: right;">
+            <el-button size="medium" @click="editConfigVisible = false">取消</el-button>
+            <el-button type="primary" size="medium" @click="saveEditConfig">保存修改</el-button>
+          </div>
+        </div>
+      </el-drawer>
+    </div>
+
+    <!-- Vue and Element UI JS -->
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+      new Vue({
+        el: '#app',
+        data() {
+          return {
+            role: 'overseas-creative',
+            selectedRows: [],
+            filters: {
+              product: '',
+              uploader: '',
+              dateRange: '',
+              customTagOp: 'contain',
+              customTag: '',
+              tag: '',
+              materialist: '',
+              naming: '',
+              media: '',
+              pushStatus: '',
+              buildStatus: '',
+              extStatus: '',
+              segmentStatus: '',
+              md5: '',
+            materialPack: '',
+            riskStatus: '',
+            channelLimit: '',
+            campaignControl: '',
+            size: '',
+            name: ''
+          },
+          testDetailVisible: false,
+          activeDetailTab: 'FB',
+          activeDetailType: 'opt', // 默认老素材优化测试
+          activeDetailProduct: '', // 当前选中的产品
+          currentDetailRow: null,  // 当前查看详情的行数据
+          testDetailData: {
+            opt: [
+              { status: '测试完成', rule: '1.0-标准自动化模板', time: '2026-01-05 10:20:00' },
+              { status: '测试中', rule: 'ROI-高回报优化模板', time: '2026-01-06 14:15:30' },
+              { status: '待测试', rule: '素材A/B测试专用模板', time: '-' }
+            ],
+            new: [
+              { status: '测试完成', rule: '新方向-流量爆发模板', time: '2026-01-07 11:30:00' },
+              { status: '待测试', rule: '新方向-场景覆盖模板', time: '-' }
+            ]
+          },
+          editConfigVisible: false,
+          currentRow: null,
+          editForm: {
+            globalTestType: 'opt',
+            globalBenchmark: '',
+            selectedProducts: [],
+            media: ['Facebook', 'AppLovin', 'Adwords', 'Tiktok', 'Unity'],
+            mediaSettings: {},
+            supportedMedias: {} // 新增：记录每个产品支持哪些媒体
+          },
+          packOptions: ['素材包_20260101_A', '素材包_20260101_B', '素材包_20260102_C', '素材包_20260103_D'],
+          editRefreshKey: 0,
+          benchmarkOptions: [
+            '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude1_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PingShiWanFa_RS-P1X1R3C2M3_LJ-aurum-Jude1.mp4',
+            '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude2_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude2.mp4',
+            '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude3_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude3.mp4',
+            '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude4_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude4.mp4'
+          ],
+          tableData: [
+              {
+                name: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude1',
+                filename: '_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PingShiWanFa_RS-P1X1R3C2M3_LJ-aurum-Jude1.mp4',
+                size: '720*1280(9:16)',
+                expanded: true,
+                testType: '老素材优化测试',
+                testGroups: [
+                  { product: 'Tile01A', medias: ['FB', 'APL', 'GG', 'TT', 'UNT'], type: '老素材优化测试' },
+                  { product: 'Tile01G', medias: ['FB', 'APL', 'GG', 'UNT'], type: '老素材优化测试' }
+                ],
+                fbBenchmarks: [
+                  { 
+                    product: 'Tile01A', 
+                    list: [
+                      { type: '对比', name: 'jude2', fullName: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude2_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude2.mp4' },
+                      { type: '对比', name: 'jude3', fullName: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude3_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude3.mp4' }
+                    ]
+                  },
+                  { 
+                    product: 'Tile01G', 
+                    list: [
+                      { type: '跑量', name: 'jude3', fullName: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude3_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude3.mp4' }
+                    ]
+                  }
+                ],
+                popoverVisible: false,
+                direction: 'Story',
+                optimize: 'JuShan-QuDiaoZouLu-PingShiWanFa',
+                theme: 'YC-3D-JuChuang',
+                score1: 'P1X1R3C2M3',
+                score2: '暂未打分',
+                products: [
+                  { label: 'Tile01A', tags: ['FB', 'APL', 'GG', 'TT', 'UNT'] },
+                  { label: 'Tile01G', tags: ['FB', 'FB', 'APL', 'GG', 'GG', 'UNT'] }
+                ],
+                buildStatus: [
+                  { label: 'Tile01A', media: [
+                    { name: 'FB', status: 'completed' }, 
+                    { name: 'APL', status: 'testing' },
+                    { name: 'GG', status: 'none' },
+                    { name: 'TT', status: 'none' },
+                    { name: 'UNT', status: 'none' }
+                  ]},
+                  { label: 'Tile01G', media: [
+                    { name: 'FB', status: 'completed' }, 
+                    { name: 'APL', status: 'none' },
+                    { name: 'GG', status: 'none' },
+                    { name: 'UNT', status: 'none' }
+                  ]}
+                ]
+              },
+              {
+                name: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude2',
+                filename: '_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude2.mp4',
+                size: '720*1280(9:16)',
+                expanded: true,
+                testType: '新方向测试',
+                testGroups: [
+                  { product: 'Tile01A', medias: ['FB', 'APL', 'GG'], type: '新方向测试' },
+                  { product: 'Tile01G', medias: ['FB', 'FB', 'APL'], type: '新方向测试' }
+                ],
+                fbBenchmarks: [
+                  { 
+                    product: 'Tile01A', 
+                    list: [
+                      { type: '跑量', name: 'jude1', fullName: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude1_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PingShiWanFa_RS-P1X1R3C2M3_LJ-aurum-Jude1.mp4' }
+                    ]
+                  },
+                  { 
+                    product: 'Tile01G', 
+                    list: [
+                      { type: '跑量', name: 'jude4', fullName: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude4_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude4.mp4' }
+                    ]
+                  }
+                ],
+                popoverVisible: false,
+                direction: 'Story',
+                optimize: 'JuShan-QuDiaoZouLu-PangMaWanFa',
+                theme: 'YC-3D-JuChuan',
+                score1: 'P1X1R3C2M3',
+                score2: '暂未打分',
+                products: [
+                  { label: 'Tile01A', tags: ['FB', 'APL', 'GG'] },
+                  { label: 'Tile01G', tags: ['FB', 'FB', 'APL'] }
+                ],
+                buildStatus: [
+                  { label: 'Tile01A', media: [
+                    { name: 'FB', status: 'testing' }, 
+                    { name: 'APL', status: 'none' },
+                    { name: 'GG', status: 'none' }
+                  ]},
+                  { label: 'Tile01G', media: [
+                    { name: 'FB', status: 'none' }, 
+                    { name: 'APL', status: 'none' }
+                  ]}
+                ]
+              },
+              {
+                name: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude3',
+                filename: '_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude3.mp4',
+                size: '720*1280(9:16)',
+                expanded: true,
+                testType: '新方向测试',
+                testGroups: [
+                  { product: 'Tile01A', medias: ['FB', 'GG'], type: '新方向测试' },
+                  { product: 'Tile01G', medias: ['FB'], type: '新方向测试' }
+                ],
+                fbBenchmarks: [
+                  { 
+                    product: 'Tile01A', 
+                    list: [
+                      { type: '对比', name: 'jude1', fullName: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude1_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PingShiWanFa_RS-P1X1R3C2M3_LJ-aurum-Jude1.mp4' }
+                    ]
+                  },
+                  { 
+                    product: 'Tile01G', 
+                    list: [
+                      { type: '跑量', name: 'jude2', fullName: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude2_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude2.mp4' }
+                    ]
+                  }
+                ],
+                popoverVisible: false,
+                direction: 'Story',
+                optimize: 'JuChuangGouTu-ZouLu-PangMaWanFa',
+                theme: 'YC-3D-JuChuan',
+                score1: 'P1X1R3C2M3',
+                score2: '暂未打分',
+                products: [
+                  { label: 'Tile01A', tags: ['FB', 'GG'] },
+                  { label: 'Tile01G', tags: ['FB', 'FB'] }
+                ],
+                buildStatus: [
+                  { label: 'Tile01A', media: [{ name: 'FB', status: 'completed' }, { name: 'GG', status: 'none' }] },
+                  { label: 'Tile01G', media: [{ name: 'FB', status: 'testing' }] }
+                ]
+              },
+              {
+                name: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude4',
+                filename: '_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude4.mp4',
+                size: '720*1280(9:16)',
+                expanded: true,
+                testType: '不测试',
+                testGroups: [],
+                fbBenchmarks: [],
+                popoverVisible: false,
+                direction: 'Story',
+                optimize: 'JuChuangGouTu-ZouLu-PangMaWanFa',
+                theme: 'YC-3D-JuChuan',
+                score1: 'P1X1R3C2M3',
+                score2: '暂未打分',
+                products: [
+                  { label: 'Tile01A', tags: ['FB', 'GG'] },
+                  { label: 'Tile01G', tags: ['FB', 'FB'] }
+                ],
+                buildStatus: [
+                  { label: 'Tile01A', media: [{ name: 'FB', status: 'none' }, { name: 'GG', status: 'none' }] },
+                  { label: 'Tile01G', media: [{ name: 'FB', status: 'none' }] }
+                ]
+              },
+              {
+                name: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude5',
+                filename: '_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude5.mp4',
+                size: '720*1280(9:16)',
+                expanded: true,
+                testType: '新方向测试',
+                testGroups: [
+                  { product: 'Tile01A', medias: ['FB', 'APL'], type: '新方向测试' },
+                  { product: 'Tile01G', medias: ['FB', 'GG'], type: '不测试' }
+                ],
+                fbBenchmarks: [
+                  { 
+                    product: 'Tile01A', 
+                    list: [
+                      { type: '跑量', name: 'jude1', fullName: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude1_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PingShiWanFa_RS-P1X1R3C2M3_LJ-aurum-Jude1.mp4' }
+                    ]
+                  }
+                ],
+                popoverVisible: false,
+                direction: 'Story',
+                optimize: 'NewDirection-Test',
+                theme: 'YC-3D-JuChuan',
+                score1: 'P1X1R3C2M3',
+                score2: '暂未打分',
+                products: [
+                  { label: 'Tile01A', tags: ['FB', 'APL'] },
+                  { label: 'Tile01G', tags: ['FB', 'GG'] }
+                ],
+                buildStatus: [
+                  { label: 'Tile01A', media: [{ name: 'FB', status: 'completed' }, { name: 'APL', status: 'testing' }] },
+                  { label: 'Tile01G', media: [{ name: 'FB', status: 'none' }, { name: 'GG', status: 'none' }] }
+                ]
+              },
+              {
+                name: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude6',
+                filename: '_LVL1-JuChuangGouTu-LVL2-ZouLu-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude6.mp4',
+                size: '720*1280(9:16)',
+                expanded: true,
+                testType: '老素材优化测试',
+                testGroups: [
+                  { product: 'Tile01A', medias: ['FB', 'GG'], type: '老素材优化测试' },
+                  { product: 'Tile01G', medias: ['FB', 'APL'], type: '不测试' }
+                ],
+                fbBenchmarks: [
+                  { 
+                    product: 'Tile01A', 
+                    list: [
+                      { type: '对比', name: 'jude2', fullName: '20260104_Tile01G_EN_9x16_FX-Story_SC-60s_ZT-YC-3D-JuChuang_BH-jude2_LVL1-JuShan-LVL2-QuDiaoZouLu-LVL3-PangMaWanFa_RS-P1X1R3C2M3_LJ-aurum-Guo-Jude2.mp4' }
+                    ]
+                  }
+                ],
+                popoverVisible: false,
+                direction: 'Story',
+                optimize: 'OldMaterial-Optimization',
+                theme: 'YC-3D-JuChuan',
+                score1: 'P1X1R3C2M3',
+                score2: '暂未打分',
+                products: [
+                  { label: 'Tile01A', tags: ['FB', 'GG'] },
+                  { label: 'Tile01G', tags: ['FB', 'APL'] }
+                ],
+                buildStatus: [
+                  { label: 'Tile01A', media: [{ name: 'FB', status: 'completed' }, { name: 'GG', status: 'none' }] },
+                  { label: 'Tile01G', media: [{ name: 'FB', status: 'none' }, { name: 'APL', status: 'none' }] }
+                ]
+              }
+            ]
+          };
+        },
+        computed: {
+          filteredTableData() {
+            if (!this.filters.name) return this.tableData;
+            // 支持多关键词搜索，以空格分隔
+            const keywords = this.filters.name.toLowerCase().split(/\s+/).filter(k => k.length > 0);
+            return this.tableData.filter(row => {
+              const fullName = (row.name + row.filename).toLowerCase();
+              // 只要成片名称包含搜索框中的任意一个关键词，就返回 true
+              return keywords.some(kw => fullName.includes(kw));
+            });
+          },
+          filteredDetailProducts() {
+            if (!this.currentDetailRow) return [];
+            // 根据当前选中的媒体页签 (activeDetailTab: FB, TT 等) 过滤产品
+            return this.currentDetailRow.products
+              .filter(p => p.tags.includes(this.activeDetailTab))
+              .map(p => p.label);
+          },
+          editTableWidth() {
+            // 编辑页面的表格宽度计算，与上传页一致
+            return (120 + this.editForm.media.length * 300) + 'px';
+          }
+        },
+        watch: {
+          activeDetailType(newType) {
+            // 当测试类型切换时，检查当前 Tab 是否变为禁用
+            const currentMedia = ['Facebook', 'AppLovin', 'Adwords', 'Tiktok', 'Unity'].find(m => this.getMediaShortName(m) === this.activeDetailTab);
+            if (this.isMediaTabDisabled(currentMedia)) {
+              // 如果当前 Tab 禁用了，找第一个可用的 Tab
+              const firstEnabled = ['Facebook', 'AppLovin', 'Adwords', 'Tiktok', 'Unity'].find(m => !this.isMediaTabDisabled(m));
+              if (firstEnabled) {
+                this.activeDetailTab = this.getMediaShortName(firstEnabled);
+              }
+            }
+          },
+          activeDetailTab(newTab) {
+            // 当媒体页签切换时，检查当前选中的产品是否还在新列表中
+            const validProducts = this.filteredDetailProducts;
+            if (validProducts.length > 0 && !validProducts.includes(this.activeDetailProduct)) {
+              this.activeDetailProduct = validProducts[0];
+            }
+          }
+        },
+        mounted() {
+          this.initRole();
+          this.checkIncomingSearch();
+          window.addEventListener('storage', this.handleStorageChange);
+          window.addEventListener('boss_role_change', (e) => {
+            this.role = e.detail;
+          });
+        },
+        methods: {
+          checkIncomingSearch() {
+            let searchVal = '';
+            try {
+              // 1. 尝试从当前 iframe 自身的 URL 参数获取 (最稳妥的方式)
+              const params = new URLSearchParams(window.location.search);
+              searchVal = params.get('search');
+              
+              // 2. 如果自身没有，尝试从顶级窗口 URL 获取 (考虑到 index.html 可能通过 iframe 加载)
+              if (!searchVal && window.top !== window) {
+                const topParams = new URLSearchParams(window.top.location.search);
+                searchVal = topParams.get('search');
+              }
+            } catch(e) {
+              console.warn('URL access limited:', e);
+            }
+
+            if (searchVal) {
+              const fullSearchName = decodeURIComponent(searchVal);
+              this.filters.name = fullSearchName;
+              
+              // 自动触发一次筛选提示
+              this.$message({
+                type: 'success',
+                message: `已为您定位标杆成片`,
+                duration: 4000,
+                showClose: true
+              });
+
+              // 延时清除 URL 参数，防止刷新页面时重复触发提示
+              setTimeout(() => {
+                try {
+                  const newUrl = window.location.pathname + window.location.hash;
+                  window.history.replaceState(null, '', newUrl);
+                } catch(e) {}
+              }, 1000);
+            }
+          },
+          initRole() {
+            try {
+              this.role = localStorage.getItem("boss_demo_role") || 'overseas-creative';
+            } catch(e) {
+              this.role = 'overseas-creative';
+            }
+          },
+          handleStorageChange(e) {
+            if (e.key === 'boss_demo_role' || e.key === 'boss_demo_role_trigger') {
+              try {
+                this.role = localStorage.getItem("boss_demo_role") || 'overseas-creative';
+              } catch(e) {}
+            }
+          },
+          handleSelectionChange(val) {
+            this.selectedRows = val;
+          },
+          checkSelectable(row) {
+            // 素材师角色下，测试类型为“不测试”的成片不可勾选
+            if (this.role === 'overseas-creative' && row.testType === '不测试') {
+              return false;
+            }
+            return true;
+          },
+          openTestDetail(row) {
+            this.currentDetailRow = row;
+            // 初始化测试类型：选中第一个可用的类型
+            if (this.hasTestType('老素材优化测试')) {
+              this.activeDetailType = 'opt';
+            } else if (this.hasTestType('新方向测试')) {
+              this.activeDetailType = 'new';
+            }
+
+            // 默认选中第一个有效产品
+            const validProducts = this.filteredDetailProducts;
+            if (validProducts.length > 0) {
+              this.activeDetailProduct = validProducts[0];
+            } else {
+              this.activeDetailProduct = '';
+            }
+            this.testDetailVisible = true;
+          },
+          hasTestType(type) {
+            if (!this.currentDetailRow) return false;
+            // 1. 检查 testGroups 中是否有该类型
+            const hasInGroups = this.currentDetailRow.testGroups && this.currentDetailRow.testGroups.some(g => g.type === type);
+            if (hasInGroups) return true;
+            // 2. 检查主测试类型是否匹配 (用于处理没有 testGroups 的简单行)
+            return this.currentDetailRow.testType === type;
+          },
+          getMediaStatusType(row, productLabel, mediaName) {
+            const product = row.buildStatus.find(p => p.label === productLabel);
+            if (!product) return 'info';
+            const media = product.media.find(m => m.name === mediaName);
+            if (!media) return 'info';
+            return media.status === 'completed' ? 'success' : (media.status === 'testing' ? 'warning' : 'info');
+          },
+          getMediaStatusText(row, productLabel, mediaName) {
+            const product = row.buildStatus.find(p => p.label === productLabel);
+            if (!product) return '未测试';
+            const media = product.media.find(m => m.name === mediaName);
+            if (!media) return '未测试';
+            return media.status === 'completed' ? '测试完成' : (media.status === 'testing' ? '测试中' : '未测试');
+          },
+          getMediaShortName(media) {
+            const map = { 'Facebook': 'FB', 'AppLovin': 'APL', 'Adwords': 'GG', 'Tiktok': 'TT', 'Unity': 'UNT' };
+            return map[media] || media;
+          },
+          isMediaTabDisabled(mediaName) {
+            if (!this.currentDetailRow) return true;
+            const shortName = this.getMediaShortName(mediaName);
+            const typeLabel = this.activeDetailType === 'opt' ? '老素材优化测试' : '新方向测试';
+            // 判断当前测试类型组里，是否包含这个媒体
+            return !(this.currentDetailRow.testGroups || []).some(g => g.type === typeLabel && g.medias.includes(shortName));
+          },
+          viewBenchmark(name) {
+            // 使用相对路径构建指向主框架 index.html 的链接
+            // 由于当前页面在 /pages/ 目录下，主框架在上一级目录
+            const mainUrl = '../index.html?search=' + encodeURIComponent(name) + '#/overseas-video';
+            window.open(mainUrl, '_blank');
+          },
+          viewMultiBenchmarks(benchList) {
+            // 提取所有标杆的 fullName，并使用换行符分隔
+            const searchKeywords = benchList.map(b => b.fullName).join('\n');
+            this.viewBenchmark(searchKeywords);
+          },
+          getAggregatedBenchmarks(row) {
+            const result = [];
+            const compareList = [];
+            const runList = [];
+            const seenNames = new Set();
+
+            (row.fbBenchmarks || []).forEach(item => {
+              (item.list || []).forEach(bench => {
+                const uniqueKey = `${bench.type}-${bench.name}`;
+                if (!seenNames.has(uniqueKey)) {
+                  seenNames.add(uniqueKey);
+                  if (bench.type === '对比') compareList.push(bench);
+                  if (bench.type === '跑量') runList.push(bench);
+                }
+              });
+            });
+
+            if (compareList.length > 0) result.push({ type: '对比', list: compareList });
+            if (runList.length > 0) result.push({ type: '跑量', list: runList });
+            return result;
+          },
+          viewAllBenchmarksInRow(row) {
+            const allBenches = [];
+            const seen = new Set();
+            (row.fbBenchmarks || []).forEach(item => {
+              (item.list || []).forEach(bench => {
+                if (!seen.has(bench.name)) {
+                  seen.add(bench.name);
+                  allBenches.push(bench);
+                }
+              });
+            });
+            this.viewMultiBenchmarks(allBenches);
+          },
+          filterGroups(row, type) {
+            if (row.testType === '不测试' && type === '不测试') {
+              // 整体不测试时，对产品原有的标签进行去重
+              return row.products.map(p => ({ 
+                product: p.label, 
+                medias: [...new Set(p.tags)] 
+              }));
+            }
+            // 正常测试组去重
+            const groups = (row.testGroups || []).filter(g => g.type === type);
+            return groups.map(g => ({
+              ...g,
+              medias: [...new Set(g.medias)]
+            }));
+          },
+          openEditConfig(row) {
+            console.log('Opening edit config for row:', row.name);
+            this.currentRow = row; 
+            this.editForm.selectedProducts = row.products.map(p => p.label);
+            this.editForm.globalTestType = row.testType === '新方向测试' ? 'new' : 'opt';
+            
+            // 提取标杆全名 (假设所有产品共用标杆)
+            let benchFull = '';
+            if (row.fbBenchmarks && row.fbBenchmarks.length > 0) {
+              const firstBench = row.fbBenchmarks[0];
+              if (firstBench.list && firstBench.list.length > 0) {
+                benchFull = firstBench.list[0].fullName;
+              }
+            }
+            this.editForm.globalBenchmark = benchFull;
+
+            const medias = ['Facebook', 'AppLovin', 'Adwords', 'Tiktok', 'Unity'];
+            const mediaMap = {
+              'Facebook': 'FB',
+              'AppLovin': 'APL',
+              'Adwords': 'GG',
+              'Tiktok': 'TT',
+              'Unity': 'UNT'
+            };
+
+            this.editForm.mediaSettings = {};
+            this.editForm.supportedMedias = {};
+
+            this.editForm.selectedProducts.forEach(p => {
+              const productInfo = row.products.find(item => item.label === p);
+              this.$set(this.editForm.supportedMedias, p, productInfo ? productInfo.tags : []);
+
+              this.$set(this.editForm.mediaSettings, p, {});
+              medias.forEach(m => {
+                const shortName = mediaMap[m];
+                
+                // 判断是否在测试
+                const isTesting = (row.testGroups || []).some(g => g.product === p && g.medias.includes(shortName)) ? 'yes' : 'no';
+                
+                this.$set(this.editForm.mediaSettings[p], m, {
+                  isTesting: isTesting,
+                  selectedPacks: row.selectedPacks || [] // 暂时回显顶层的素材包
+                });
+              });
+            });
+            this.editConfigVisible = true;
+          },
+          applyToAllInEdit(m) {
+            if (this.editForm.selectedProducts.length <= 1) return;
+            const firstProd = this.editForm.selectedProducts[0];
+            const sourceConfig = this.editForm.mediaSettings[firstProd][m];
+            this.editForm.selectedProducts.slice(1).forEach(prod => {
+              const targetConfig = this.editForm.mediaSettings[prod][m];
+              targetConfig.isTesting = sourceConfig.isTesting;
+              targetConfig.selectedPacks = [...sourceConfig.selectedPacks];
+            });
+            this.$message.success(`已同步至全部产品`);
+          },
+          saveEditConfig() {
+            const row = this.currentRow;
+            if (!row) return;
+
+            const globalTypeLabel = this.editForm.globalTestType === 'opt' ? '老素材优化测试' : '新方向测试';
+            const benchType = this.editForm.globalTestType === 'opt' ? '对比' : '跑量';
+            
+            // 1. 更新主测试类型
+            row.testType = globalTypeLabel;
+
+            // 2. 更新 testGroups (区分测试/不测试)
+            const newGroups = [];
+            const mediaMap = { 'Facebook': 'FB', 'AppLovin': 'APL', 'Adwords': 'GG', 'Tiktok': 'TT', 'Unity': 'UNT' };
+            
+            Object.keys(this.editForm.mediaSettings).forEach(prod => {
+              const medias = [];
+              Object.keys(this.editForm.mediaSettings[prod]).forEach(m => {
+                if (this.editForm.mediaSettings[prod][m].isTesting === 'yes') {
+                  medias.push(mediaMap[m]);
+                }
+              });
+              if (medias.length > 0) {
+                newGroups.push({
+                  product: prod,
+                  medias: medias,
+                  type: globalTypeLabel
+                });
+              }
+            });
+            row.testGroups = newGroups;
+
+            // 5. 更新标杆
+            if (this.editForm.globalBenchmark) {
+              const fullName = this.editForm.globalBenchmark;
+              // 提取标识，如 jude1
+              const match = fullName.match(/BH-([^_-]+)/);
+              const shortName = match ? match[1] : 'benchmark';
+              
+              row.fbBenchmarks = row.products.map(p => ({
+                product: p.label,
+                list: [{
+                  type: benchType,
+                  name: shortName,
+                  fullName: fullName
+                }]
+              }));
+            } else {
+              row.fbBenchmarks = [];
+            }
+
+            // 4. 关闭抽屉
+            this.editConfigVisible = false;
+            this.$message.success('配置已成功同步至成片列表');
+          },
+          isMediaSupported(productName, mediaFullName) {
+            const mediaMap = {
+              'Facebook': 'FB',
+              'AppLovin': 'APL',
+              'Adwords': 'GG',
+              'Tiktok': 'TT',
+              'Unity': 'UNT'
+            };
+            const shortName = mediaMap[mediaFullName];
+            const supportedList = this.editForm.supportedMedias[productName] || [];
+            return supportedList.includes(shortName);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
